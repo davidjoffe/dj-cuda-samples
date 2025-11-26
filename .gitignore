@@ -4,3 +4,7 @@
 *.ptx
 *.cubin
 *.fatbin
+
+# CMake build folders
+/build-linux/
+/build/
