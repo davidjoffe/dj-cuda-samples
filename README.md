@@ -73,3 +73,11 @@ sudo apt install libglfw3-dev
 If you get a build error about glfw3 cmake config not found, first try set your VCPKG folder in build.bat. Alternatively pass " -DCMAKE_TOOLCHAIN_FILE=" to cmake. 
 
 For Windows, you should build from a Developer Command Prompt for VS.
+
+## Docker Build
+
+Note that the Docker build currently has no User Interface (unless perhaps via exporting X11 DISPLAY)
+
+```docker build -t dj-cuda-sample1:local -f .\bouncing-balls\docker\Dockerfile .```
+
+```docker run --gpus all --runtime=nvidia dj-cuda-sample1:local```
