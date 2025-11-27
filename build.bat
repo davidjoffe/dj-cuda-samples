@@ -16,3 +16,6 @@ rd /s /q build
 
 cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=%VCPKG%/scripts/buildsystems/vcpkg.cmake
 cmake --build build
+
+@rem run the built demo
+.\build\bouncing-balls\Debug\djbouncing_balls_demo.exe"
