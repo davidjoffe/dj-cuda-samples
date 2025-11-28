@@ -1,5 +1,7 @@
 # dj-cuda-samples - Bouncing Balls Demo CMakeLists.txt
-project(djbouncing_balls LANGUAGES CXX CUDA)
+
+# Add C for glad GL loader ...
+project(djbouncing_balls LANGUAGES C CXX CUDA)
 
 add_executable(djbouncing_balls_demo
     demo.cpp
@@ -17,6 +19,7 @@ find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 
 target_link_libraries(djbouncing_balls_demo PRIVATE
+    glad
     glfw
     OpenGL::GL
 )

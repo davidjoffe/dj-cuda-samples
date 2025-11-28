@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
-project(dj_cuda_samples LANGUAGES CXX CUDA)
+
+# Add C for glad GL loader ...
+project(dj_cuda_samples LANGUAGES C CXX CUDA)
 
 # ================================================================
 # Global Configuration
@@ -16,6 +18,20 @@ set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCH})
 message(STATUS "CUDA sm_${CUDA_ARCH}")
 
 include(cmake/warnings.cmake OPTIONAL)
+
+# ============================================================
+# GLAD OpenGL loader cmake library
+# ============================================================
+add_library(glad STATIC
+    external/glad/src/glad.c
+)
+
+target_include_directories(glad PUBLIC
+    external/glad/include
+)
+
+# Tell CMake that glad.c is C code
+set_target_properties(glad PROPERTIES LINKER_LANGUAGE C)
 
 # ============================================================
 # Optional small core library (common utils)
