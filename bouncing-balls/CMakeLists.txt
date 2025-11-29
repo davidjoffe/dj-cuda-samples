@@ -5,6 +5,7 @@ project(djbouncing_balls LANGUAGES C CXX CUDA)
 
 add_executable(djbouncing_balls_demo
     demo.cpp
+    visuals_gl.cpp
     kernels.cu
 )
 

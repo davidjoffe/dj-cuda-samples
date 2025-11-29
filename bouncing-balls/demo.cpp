@@ -1,15 +1,20 @@
 // dj CUDA sample
 // Demo program for bouncing balls simulation
-// dj2025-11
+//
+// Created dj2025-11
+//
 // https://github.com/davidjoffe/dj-cuda-samples
 // Copyright David Joffe 2025
 
 #include <iostream>
 #include <cuda_runtime.h>
 #include "defs.h"
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <chrono>
+#include <thread>//sleep
 #include <cstdlib>
+#include <string.h>//memset
 
 void StructOfArrays_Balls::init(int n)
 {
@@ -84,7 +89,7 @@ int main() {
     std::cout << "dj CUDA sample" << std::endl;
 
     // (1) INIT
-
+   
     // Init GLFW
     if (!glfwInit()) {
         std::cerr << "Failed to init GLFW\n";
@@ -107,12 +112,23 @@ int main() {
 
     glfwMakeContextCurrent(window);
 
+    // The below is actually specific to GL-based visualization(s) ...
+    // if we only had, say, an ncurses-based visualization, we wouldn't need OpenGL context at all ... (low/future)
+    // For now it's fine.
+
+    // Load OpenGL functions using GLAD (after context creation)
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cerr << "Failed to load OpenGL! gladLoadGLLoader" << std::endl;
+        return -1;
+    }
+
     // Enable VSYNC (0 for unlimited)
     glfwSwapInterval(1);
 
 
     std::cout << "Initializing demo data..." << std::endl;
     const int NUMBALLS = 1024;
+    const int N = NUMBALLS;
 
     // GPU VRAM top-level data instance of array of structs
     // NB this must live in GPU memory also if we pass it to the kernel update as a pointer, which we do
@@ -138,8 +154,15 @@ int main() {
     cudaMemcpy(d_balls, &h_balls, sizeof(StructOfArrays_Balls),
         cudaMemcpyHostToDevice);
 
+    // Initialize visualization(s)
+    djVisualsInit();
 
-    
+    // Copy positions etc. to CPU for visualization
+    float* h_x = new float[N];
+    float* h_y = new float[N];
+    memset(h_x, 0, N*sizeof(float));
+    memset(h_y, 0, N*sizeof(float));
+
     // (2) Main loop
     std::cout << "Starting main loop. Close window or press ESC to exit." << std::endl;
     auto lastFrameTime = std::chrono::high_resolution_clock::now();
@@ -156,15 +179,29 @@ int main() {
         // Run GPU kernel parallel update function
         djDoUpdate(d_balls, dt);//0.016f);
 
+        // Copy positions etc. from GPU to CPU for visualization
+        cudaMemcpy(h_x, h_balls.x, N*sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(h_y, h_balls.y, N*sizeof(float), cudaMemcpyDeviceToHost);
+
         // Clear
         glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // TODO: draw balls here (OpenGL or CUDA→GL interop)
+        // Draw here
+        djVisualsDraw(h_x, h_y, nullptr, nullptr, N);
 
         glfwSwapBuffers(window);
+
+        // Prevent CPU hogging (slightly fudgy/simplistic) with a sleep of 1 millisecond.
+        // This helps avoid pegging the CPU at 100% usage in this simple demo app, which can use too much power and make it run hot, since we don't need a thousand frames per second for a simple sample ...
+        //
+        // NB this is very carefully and deliberately placed after the 'swap' but before 'poll events',
+        // since if (say) the user presses a key during sleep, we want to process the user's input as quickly as possible before drawing the next frame (if this were a game) for fastest possible response to user input.
+        // If we put the sleep after pollEvents, there would be an unnecessary delay between user input and processing it as it would render an extra frame first and only then process the event.
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
         glfwPollEvents();
-    }
+     }
 
     // (3) Cleanup
     // This is a little dicey: Remember, h_balls lives in CPU memory but not only cleans the GPU 

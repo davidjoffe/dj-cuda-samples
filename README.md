@@ -20,7 +20,7 @@ To install via winget, use ```winget install Nvidia.CUDA```
 
 First install dependencies, as per below instructions.
 
-Then to build on Windows, configure and run ```build.bat``` build helper, or:
+Then to build on Windows, configure and run ```.\build.bat``` build helper, or:
 
 ```
 cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=c:/your-vcpkg-folder/scripts/buildsystems/vcpkg.cmake

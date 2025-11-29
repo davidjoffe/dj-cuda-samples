@@ -29,4 +29,11 @@ struct StructOfArrays_Balls
 // NB d_data is device (GPU) pointer. dt is delta time
 extern void djDoUpdate(StructOfArrays_Balls* d_data, float dt);
 
+// future: I think there should be a base class like abstract OOP 'Visualization' with virtual methods for init, draw etc.
+// Then we should instantiate and generically allocate/init/draw zero or more instances .. so could have multiple running visualizations
+// An ncurses-based visualization for, say, Docker could then also easily be an option ...
+
+extern void djVisualsInit();
+extern void djVisualsDraw(float *h_x, float* h_y, float* h_z, float* radius, int N);
+
 #endif // _DJ_BOUNCING_BALLS_DEFS_H_
