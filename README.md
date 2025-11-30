@@ -12,9 +12,13 @@ Platforms: Windows; Linux/WSL
 
 ## Requirements
 
-Requires NVIDIA CUDA toolkit installed (e.g. via winget or NVIDIA installer).
+* Requires NVIDIA CUDA toolkit installed (e.g. via winget or NVIDIA installer).
 
 To install via winget, use ```winget install Nvidia.CUDA```
+
+* CMake 3.2
+* OpenGL + GLFW3 dev packages
+* A modern NVIDIA GPU with CUDA support
 
 ## Build
 
@@ -76,7 +80,10 @@ For Windows, you should build from a Developer Command Prompt for VS.
 
 ## Docker Build
 
-Note that the Docker build currently has no User Interface (unless perhaps via exporting X11 DISPLAY)
+The Docker image builds and runs the CUDA sample on the GPU, but currently has no User Interface unless you forward X11 or VirtualGL. Requires the NVIDIA Container Toolkit to be installed.
+
+Note that if you get a warning about the driver or NVIDIA Container Toolkit failing to load when you run the Docker version in Docker Desktop, try run from command line as per below to force GPU support via command line:
+
 
 ```docker build -t dj-cuda-sample1:local -f .\bouncing-balls\docker\Dockerfile .```
 
