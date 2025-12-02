@@ -9,12 +9,16 @@
 #include <iostream>
 #include <cuda_runtime.h>
 #include "defs.h"
+#include "stats.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <chrono>
 #include <thread>//sleep
 #include <cstdlib>
 #include <string.h>//memset
+
+// Stats like number of frames drawn, total time, updates called etc.
+Stats g_stats;
 
 void StructOfArrays_Balls::init(int n)
 {
@@ -123,6 +127,7 @@ int main() {
     }
 
     // Enable VSYNC (0 for unlimited)
+    // dj2025-11 note - on WSL Linux this seems to have no effect currently, so we get uncapped framerates (other than our sleep below)
     glfwSwapInterval(1);
 
 
@@ -200,6 +205,12 @@ int main() {
         // If we put the sleep after pollEvents, there would be an unnecessary delay between user input and processing it as it would render an extra frame first and only then process the event.
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
+        // STATS
+        ++g_stats.frameCount; // "++foo" may in some cases optimize better than "foo++"
+        ++g_stats.updateCount;
+        g_stats.frameTimeTotal += dt;
+        //stats.fps = 1.0f / dt;
+
         glfwPollEvents();
      }
 
@@ -216,5 +227,26 @@ int main() {
     glfwDestroyWindow(window);
     glfwTerminate(); 
 
+    // total time
+    std::cout << "Total time: " << g_stats.frameTimeTotal;
+    if (g_stats.frameTimeTotal > 0.0f) // <- prevent divide by 0
+    {
+        std::cout << ", average FPS (Frames per Second): ";
+        g_stats.averageFPS = (g_stats.frameCount / g_stats.frameTimeTotal);
+        std::cout << g_stats.averageFPS;
+    }
+    std::cout << std::endl;
+    if (g_stats.frameCount > 0)
+        std::cout << "Average frame time (ms): " << (g_stats.frameTimeTotal / g_stats.frameCount * 1000.0f) << std::endl;
+    std::cout << "Total frames: " << g_stats.frameCount << std::endl;
+    std::cout << "Total updates: " << g_stats.updateCount << std::endl;
+
+    // Set to null even though we're 'about to exit' is a good habit just in case someone later tries to add code below dereferencing these pointers
+    delete[] h_x;
+    h_x = nullptr;
+    delete[] h_y;
+    h_y = nullptr;
+
+    std::cout << "Exiting demo." << std::endl;
     return 0;
 }
