@@ -26,15 +26,32 @@ void djVisualsInit()
     const char* vs = R"(
         #version 330 core
         layout(location = 0) in vec2 aPos;
+        out vec4 vertexColor; // send color to the fragment shader
         void main() {
             gl_Position = vec4(aPos, 0.0, 1.0);
+            // Originally we just had white vertices, now we make the color position-dependent which looks nicer
+            // later we could maybe add some settings if user wants to make it white again or something
+            // Positions are currently between -1 to 1 so make sure normalized in that range
+            float x = clamp(aPos.x, -1.0, 1.0);
+            float y = clamp(aPos.y, -1.0, 1.0);
+            //float z = 0.0; // could use aPos.z if we had it
+            vertexColor = vec4(
+                0.1 + 0.9 * ((x + 1.0) / 2.0), // <- red
+                0.1 + 0.9 * ((y + 1.0) / 2.0), // <- green
+                0.1 + 0.9 * ((0 + 1.0) / 2.0), // <- blue
+                1.0
+            );
         }
         )";
     const char* fs = R"(
         #version 330 core
         out vec4 FragColor;
+        in vec4 vertexColor; // From vertex shader
         void main() {
-            FragColor = vec4(1.0, 1.0, 1.0, 1.0); // white pixel
+            //FragColor = vec4(1.0, 1.0, 1.0, 1.0); // white pixel
+            //FragColor = vec4(1.0, 1.0, 0.5, 1.0); // off-white pixel
+            // make the color depend on position
+            FragColor = vertexColor;
         }
         )";
 
@@ -71,9 +88,9 @@ void djVisualsInit()
 void djVisualsDraw(float *h_x, float* h_y, float* h_z, float* radius, int N)
 {
     // One "pixel" coord in NDC (-1..1)
-    float px = -0.2f;
-    float py =  0.3f;
-    float pts[2] = { px, py };
+    //float px = -0.2f;
+    //float py =  0.3f;
+    float pts[2] = { 0.0f, 0.0f };
 
     GLuint vao, vbo;
     glGenVertexArrays(1, &vao);
@@ -101,7 +118,7 @@ void djVisualsDraw(float *h_x, float* h_y, float* h_z, float* radius, int N)
         pts[0] = h_x[i] + drawoffsetX;
         pts[1] = h_y[i] + drawoffsetY;
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(pts), pts, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(pts), pts, GL_STATIC_DRAW);        
         //glSetPointSize(5.0f * ());  // size of your "pixel"”" - in future could maybe scale with 'z' so further away look smaller?
         glDrawArrays(GL_POINTS, 0, 1); // <- "put pixel"
     }
