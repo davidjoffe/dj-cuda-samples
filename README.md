@@ -1,5 +1,7 @@
 # dj CUDA Samples
 
+![CUDA Bouncing Balls Demo](media/dj_cuda_bouncing_balls_demo.png)
+
 A growing collection of small CUDA cross-platform learning samples by David Joffe, starting with a simple GPU-accelerated bouncing-balls demo using CUDA + OpenGL via GLFW.
 
 [CUDA Sample(s)/demo by David Joffe](https://github.com/davidjoffe/dj-cuda-samples)
