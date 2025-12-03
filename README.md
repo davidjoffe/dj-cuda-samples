@@ -80,11 +80,19 @@ If you get a build error about glfw3 cmake config not found, first try set your 
 
 For Windows, you should build from a Developer Command Prompt for VS.
 
-## Docker Build
+## Docker (Optional)
 
-The Docker image builds and runs the CUDA sample on the GPU, but currently has no User Interface unless you forward X11 or VirtualGL. Requires the NVIDIA Container Toolkit to be installed.
+Note Docker support is completely **optional**.
 
-Note that if you get a warning about the driver or NVIDIA Container Toolkit failing to load when you run the Docker version in Docker Desktop, try run from command line as per below to force GPU support via command line:
+It provides an alternative, additional way to build and run the CUDA samples — useful for deployment, reproducible builds, or testing.
+
+## Docker Build and Run
+
+The provided Dockerfile builds the CUDA sample inside a GPU-enabled container. It currently has no User Interface unless you forward X11 or VirtualGL.
+
+It requires the NVIDIA Container Toolkit to be installed - see the NVIDIA guide for installing this.
+
+Note that if you have installed the NVIDIA Container Toolkit but still get a warning about the driver failing to load when you run the Docker version in Docker Desktop, try run from command line as per below to force GPU support via command line:
 
 
 ```docker build -t dj-cuda-sample1:local -f .\bouncing-balls\docker\Dockerfile .```
