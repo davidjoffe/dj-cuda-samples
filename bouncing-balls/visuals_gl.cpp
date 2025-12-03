@@ -111,7 +111,18 @@ void djVisualsDraw(float *h_x, float* h_y, float* h_z, float* radius, int N)
     const float scaleY = 1.f;//600.f;
     const float drawoffsetX = 0.f;
     const float drawoffsetY = -0.95f;// should be near bottom of window
-    glPointSize(3.0f);
+
+    // If many more points, make the points smaller to scale and fit on screen better
+    if (N>=100000)
+        glPointSize(0.5f);
+    else if (N>=20000)
+        glPointSize(0.8f);
+    else if (N>=10000)
+        glPointSize(1.0f);
+    else if (N>=5000)
+        glPointSize(2.0f);
+    else
+        glPointSize(3.0f);
 
     // LOOP THROUGH BOUNCING BALLS' POSITIONS AND DRAW
     for ( int i = 0; i < N; ++i ) {

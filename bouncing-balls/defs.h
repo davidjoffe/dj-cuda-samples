@@ -27,7 +27,7 @@ struct StructOfArrays_Balls
 };
 
 // NB d_data is device (GPU) pointer. dt is delta time
-extern void djDoUpdate(StructOfArrays_Balls* d_data, float dt);
+extern void djDoUpdate(StructOfArrays_Balls* d_data, float dt, int N);
 
 // future: I think there should be a base class like abstract OOP 'Visualization' with virtual methods for init, draw etc.
 // Then we should instantiate and generically allocate/init/draw zero or more instances .. so could have multiple running visualizations

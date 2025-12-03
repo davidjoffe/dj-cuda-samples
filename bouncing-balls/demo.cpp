@@ -90,7 +90,11 @@ void StructOfArrays_Balls::cleanup()
 
 
 int main() {
+    std::cout << "------------------------------------------" << std::endl;
     std::cout << "dj CUDA sample" << std::endl;
+    std::cout << "Keys: P: Pause/unpause simulation" << std::endl;
+    std::cout << "     ESC: Exit" << std::endl;
+    std::cout << "------------------------------------------" << std::endl;
 
     // (1) INIT
    
@@ -132,7 +136,10 @@ int main() {
 
 
     std::cout << "Initializing demo data..." << std::endl;
-    const int NUMBALLS = 1024;
+    //const int NUMBALLS = 1024*20;
+    //const int NUMBALLS = 20000;
+    const int NUMBALLS = 10000;
+    //const int NUMBALLS = 1024*2;
     const int N = NUMBALLS;
 
     // GPU VRAM top-level data instance of array of structs
@@ -169,12 +176,25 @@ int main() {
     memset(h_y, 0, N*sizeof(float));
 
     // (2) Main loop
+    bool paused = false;
     std::cout << "Starting main loop. Close window or press ESC to exit." << std::endl;
     auto lastFrameTime = std::chrono::high_resolution_clock::now();
     while (!glfwWindowShouldClose(window)) {
         // Close on ESC
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
+        // P for pause
+        // Detect 'edge' of keypress (but react on down for fastest response, but we don't want to repeat pause/unpause rapidly while key is held down)
+        int keystate = glfwGetKey(window, GLFW_KEY_P);
+        static int keystate_last = GLFW_RELEASE;
+        if (keystate == GLFW_PRESS && keystate_last != GLFW_PRESS) {
+            paused = !paused;
+            if (paused)
+                std::cout << "Pause" << std::endl;
+            else
+                std::cout << "Unpause" << std::endl;
+        }
+        keystate_last = keystate;
 
         // Calculate delta-time (time passed since last frame) for updates
         auto now = std::chrono::high_resolution_clock::now();
@@ -182,7 +202,8 @@ int main() {
         lastFrameTime = now;
 
         // Run GPU kernel parallel update function
-        djDoUpdate(d_balls, dt);//0.016f);
+        if (!paused)
+            djDoUpdate(d_balls, dt, N);//0.016f);
 
         // Copy positions etc. from GPU to CPU for visualization
         cudaMemcpy(h_x, h_balls.x, N*sizeof(float), cudaMemcpyDeviceToHost);
@@ -206,9 +227,12 @@ int main() {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         // STATS
-        ++g_stats.frameCount; // "++foo" may in some cases optimize better than "foo++"
         ++g_stats.updateCount;
-        g_stats.frameTimeTotal += dt;
+        if (!paused)
+        {
+            ++g_stats.frameCount; // "++foo" may in some cases optimize better than "foo++"
+            g_stats.frameTimeTotal += dt;
+        }
         //stats.fps = 1.0f / dt;
 
         glfwPollEvents();
@@ -227,6 +251,8 @@ int main() {
     glfwDestroyWindow(window);
     glfwTerminate(); 
 
+    // STATS/INFO
+    std::cout << "Particles: " << N << std::endl;
     // total time
     std::cout << "Total time: " << g_stats.frameTimeTotal;
     if (g_stats.frameTimeTotal > 0.0f) // <- prevent divide by 0

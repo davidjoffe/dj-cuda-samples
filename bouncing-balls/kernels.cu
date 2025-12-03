@@ -71,15 +71,15 @@ __global__ void kernelDemoUpdate(StructOfArrays_Balls* balls, int count, float d
 }
 
 // NB d_data is device (GPU) pointer. dt is delta time
-void djDoUpdate(StructOfArrays_Balls* d_data, float dt)
+void djDoUpdate(StructOfArrays_Balls* d_data, float dt, int N)
 {
     // Sanity check
     if (d_data == nullptr) {
         std::cerr << "djDoUpdate: Error: d_data is null!" << std::endl;
         return;
     }
-    const int NUMBALLS = 1024;
-    const int N = NUMBALLS;
+    //const int NUMBALLS = 1024;
+    //const int N = NUMBALLS;
 
     int threadsPerBlock = 256;//16;
     int blocks = (N + threadsPerBlock - 1) / threadsPerBlock;
