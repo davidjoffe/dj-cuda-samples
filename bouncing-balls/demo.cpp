@@ -102,11 +102,11 @@ int main(int argc, char** argv) {
     std::cout << "===========================================" << std::endl;
 
     bool paused = false;
-    const int NUMBALLS = 20000;
     //const int NUMBALLS = 10000;
     //const int NUMBALLS = 100000;
-    //const int NUMBALLS = 1024;
-    int N = NUMBALLS;
+    //const int N = 1024;
+    //int N = 10000;//1024;//NUMBALLS;
+    int N = 20000;
 
     // PARSE COMMAND LINE ARGUMENTS the standard old way
     for (int i=1; i<argc; ++i) {
@@ -185,7 +185,7 @@ int main(int argc, char** argv) {
 
     // Initialize start positions, radius data etc.
     // Init on CPU then copy initial state to GPU mem to start
-    h_balls.init(NUMBALLS);
+    h_balls.init(N);
     // Do shallow copy of struct to GPU.
     // NB we can't just do "*d_balls = h_balls;" as we are used to doing in C/C++!
     // as that would mean dereferencig a GPU pointer here from CPU code, which causes a crash.
