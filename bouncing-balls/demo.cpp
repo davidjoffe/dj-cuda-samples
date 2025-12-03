@@ -46,7 +46,16 @@ void StructOfArrays_Balls::init(int n)
 
     std::cout << "dj:Randomizing initial ball positions and velocities." << std::endl;
     // Randomize position, radius etc. here
-    for (int i=0; i<n; i++) {
+    // Temporary CPU arrays for init, then copy all at once to GPU (since CPU <-> GPU copies are relatively slow and latency-bound, better to do fewer large copies than many small ones)
+    StructOfArrays_Balls h_init;
+    h_init.radius = new float[n];
+    h_init.x = new float[n];
+    h_init.y = new float[n];
+    h_init.z = new float[n];
+    h_init.vx = new float[n];
+    h_init.vy = new float[n];
+    h_init.vz = new float[n];
+    for (int i=0; i<n; ++i) {
         float h_radius = 0.1f + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(0.2f)));
         float h_x = -1.0f + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(2.0f)));
         float h_y = -1.0f + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(2.0f)));
@@ -54,15 +63,31 @@ void StructOfArrays_Balls::init(int n)
         float h_vx = -0.01f + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(0.02f)));
         float h_vy = -0.01f + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(0.02f)));
         float h_vz = -0.01f + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(0.02f)));
-        // todo this has too many small copies, can be more optimal
-        cudaMemcpy(&radius[i], &h_radius, sizeof(float), cudaMemcpyHostToDevice);
-        cudaMemcpy(&x[i], &h_x, sizeof(float), cudaMemcpyHostToDevice);
-        cudaMemcpy(&y[i], &h_y, sizeof(float), cudaMemcpyHostToDevice);
-        cudaMemcpy(&z[i], &h_z, sizeof(float), cudaMemcpyHostToDevice);
-        cudaMemcpy(&vx[i], &h_vx, sizeof(float), cudaMemcpyHostToDevice);
-        cudaMemcpy(&vy[i], &h_vy, sizeof(float), cudaMemcpyHostToDevice);
-        cudaMemcpy(&vz[i], &h_vz, sizeof(float), cudaMemcpyHostToDevice);
+        h_init.radius[i] = h_radius;
+        h_init.x[i] = h_x;
+        h_init.y[i] = h_y;
+        h_init.z[i] = h_z;
+        h_init.vx[i] = h_vx;
+        h_init.vy[i] = h_vy;
+        h_init.vz[i] = h_vz;
     }
+    // Several large copies instead of many small ones - should be faster than before for large N
+    // This is especially true because each copy is CPU <-> GPU hence latency-bound (relatively)
+    cudaMemcpy(radius, h_init.radius, n*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(x, h_init.x, n*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(y, h_init.y, n*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(z, h_init.z, n*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(vx, h_init.vx, n*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(vy, h_init.vy, n*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(vy, h_init.vz, n*sizeof(float), cudaMemcpyHostToDevice);
+    delete[] h_init.x;
+    delete[] h_init.y;
+    delete[] h_init.z;
+    delete[] h_init.vx;
+    delete[] h_init.vy;
+    delete[] h_init.vz;
+    delete[] h_init.radius;
+
     std::cout << "dj:Initialization complete." << std::endl;
 }
 
