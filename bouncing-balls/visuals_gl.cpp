@@ -85,7 +85,7 @@ void djVisualsInit()
     glPointSize(5.0f);  // size of your “pixel”
 }
 
-void djVisualsDraw(float *h_x, float* h_y, float* h_z, float* radius, int N)
+void djVisualsDraw(float *h_x, float* h_y, float* h_z, float* radius, const int N)
 {
     // One "pixel" coord in NDC (-1..1)
     //float px = -0.2f;
@@ -113,14 +113,15 @@ void djVisualsDraw(float *h_x, float* h_y, float* h_z, float* radius, int N)
     const float drawoffsetY = -0.95f;// should be near bottom of window
 
     // If many more points, make the points smaller to scale and fit on screen better
+    const float basePointSize = 0.0f;//1.0f;
     if (N>=100000)
-        glPointSize(0.5f);
+        glPointSize(0.5f + basePointSize);
     else if (N>=20000)
-        glPointSize(0.8f);
+        glPointSize(0.8f + basePointSize);
     else if (N>=10000)
-        glPointSize(1.0f);
+        glPointSize(1.0f + basePointSize);
     else if (N>=5000)
-        glPointSize(2.0f);
+        glPointSize(2.0f + basePointSize);
     else
         glPointSize(3.0f);
 
