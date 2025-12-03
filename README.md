@@ -52,6 +52,22 @@ cmake --build build-linux
 ./build-linux/bouncing-balls/djbouncing_balls_demo
 ```
 
+## Help
+
+### **Keys**
+
+```
+    P     Pause/Unpause
+    ESC   Exit
+```
+
+### **Command-line Options**
+
+```
+   --paused   Start paused
+   -N / --n   Number of particles/entities
+```
+
 ### Installing Dependencies:
 
 This uses glfw to create a window with OpenGL context.

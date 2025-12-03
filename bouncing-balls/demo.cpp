@@ -89,12 +89,45 @@ void StructOfArrays_Balls::cleanup()
 }
 
 
-int main() {
-    std::cout << "------------------------------------------" << std::endl;
+int main(int argc, char** argv) {
+    std::cout << "===========================================" << std::endl;
     std::cout << "dj CUDA sample" << std::endl;
-    std::cout << "Keys: P: Pause/unpause simulation" << std::endl;
-    std::cout << "     ESC: Exit" << std::endl;
-    std::cout << "------------------------------------------" << std::endl;
+    std::cout << "Keys:" << std::endl;
+    std::cout << "    P     Pause/Unpause" << std::endl;
+    std::cout << "    ESC   Exit" << std::endl;
+    std::cout << "-------------------------------------------" << std::endl;
+    std::cout << "Command line options:" << std::endl;
+    std::cout << "   --paused   Start paused" << std::endl;
+    std::cout << "   -N / --n   Number of particles/entities" << std::endl;
+    std::cout << "===========================================" << std::endl;
+
+    bool paused = false;
+    const int NUMBALLS = 20000;
+    //const int NUMBALLS = 10000;
+    //const int NUMBALLS = 100000;
+    //const int NUMBALLS = 1024;
+    int N = NUMBALLS;
+
+    // PARSE COMMAND LINE ARGUMENTS the standard old way
+    for (int i=1; i<argc; ++i) {
+        //if (std::string(argv[i]) == "--no-gfx")//future? headless ..
+        //    visual = false;
+        // todo - future (low prio) some combined system to dual-handle these as either say command line args, or say user settings to load/save
+        if (std::string(argv[i]) == "--paused")
+            paused = true;
+        else if (
+            (std::string(argv[i]) == "-N" || std::string(argv[i]) == "--n")
+            && i+1<argc) {
+            N = std::atoi(argv[i+1]);
+            ++i; // skip next as we've used it as parameter
+        }
+        //else // maybe later
+            //N = std::atoi(argv[i]);
+    }
+    
+    // Display settings before we start
+    if (paused) std::cout << "Starting paused" << std::endl;
+    std::cout << "Particles: N=" << N << std::endl;
 
     // (1) INIT
    
@@ -111,7 +144,10 @@ int main() {
 
     // Create window
     std::cout << "Creating window..." << std::endl;
-    GLFWwindow* window = glfwCreateWindow(800, 600, "dj CUDA Sample - Bouncing Balls", nullptr, nullptr);
+    std::string title = "dj CUDA Sample - Bouncing Balls";
+    title = title + " - ";
+    title = title + std::to_string(N) + " particles"; // not quite sure about word 'particles' ... these may be more than just particles ...
+    GLFWwindow* window = glfwCreateWindow(800, 600, title.c_str(), nullptr, nullptr);
     if (!window) {
         std::cerr << "Failed to create GLFW window\n";
         glfwTerminate();
@@ -136,11 +172,6 @@ int main() {
 
 
     std::cout << "Initializing demo data..." << std::endl;
-    //const int NUMBALLS = 1024*20;
-    //const int NUMBALLS = 20000;
-    const int NUMBALLS = 10000;
-    //const int NUMBALLS = 1024*2;
-    const int N = NUMBALLS;
 
     // GPU VRAM top-level data instance of array of structs
     // NB this must live in GPU memory also if we pass it to the kernel update as a pointer, which we do
@@ -176,7 +207,7 @@ int main() {
     memset(h_y, 0, N*sizeof(float));
 
     // (2) Main loop
-    bool paused = false;
+    //bool paused = startpaused; // User may optionally 'start paused' etc.
     std::cout << "Starting main loop. Close window or press ESC to exit." << std::endl;
     auto lastFrameTime = std::chrono::high_resolution_clock::now();
     while (!glfwWindowShouldClose(window)) {
