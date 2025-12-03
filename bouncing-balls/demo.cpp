@@ -270,6 +270,8 @@ int main(int argc, char** argv) {
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Draw here
+        // Temporarily keep old drawing code commented out for now for testing ... to make sure new one is correct
+        //djVisualsDrawOld(h_x, h_y, nullptr, nullptr, N);
         djVisualsDraw(h_x, h_y, nullptr, nullptr, N);
 
         glfwSwapBuffers(window);

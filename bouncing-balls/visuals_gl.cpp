@@ -7,6 +7,7 @@
 
 #include "defs.h"
 #include <glad/glad.h>
+#include <string.h>//memset
 
 // Small helper to compile a shader
 GLuint compile(GLenum type, const char* src) {
@@ -16,8 +17,20 @@ GLuint compile(GLenum type, const char* src) {
     return s;
 }
 
-// Shader handle
-GLuint prog = 0;
+// Simple struct to hold variables and data for OpenGL visuals, such as shader handle, vertex arrays, etc.
+struct GLContext
+{
+    // Shader handle
+    GLuint prog = 0;
+
+    // todo still cleanup below on exit ... djVisualsCleanup() or something? and/or OOP-y for generic visualations system later ... low prio
+
+    // global vertex buffer array for rendering points
+    float* vertexarray = nullptr;
+    int N = 0;
+    GLuint vao=0, vbo=0;
+};
+GLContext g_GL;
 
 void djVisualsInit()
 {
@@ -67,29 +80,95 @@ void djVisualsInit()
         // We want to do things like shader compilation once only on initialization
         v = compile(GL_VERTEX_SHADER, vs);
         f = compile(GL_FRAGMENT_SHADER, fs);
-        prog = glCreateProgram();
-        glAttachShader(prog, v);
-        glAttachShader(prog, f);
-        glLinkProgram(prog);
+        g_GL.prog = glCreateProgram();
+        glAttachShader(g_GL.prog, v);
+        glAttachShader(g_GL.prog, f);
+        glLinkProgram(g_GL.prog);
 
         initialized = true;
     }
 
-    glAttachShader(prog, v);
-    glAttachShader(prog, f);
-    glLinkProgram(prog);
+    glAttachShader(g_GL.prog, v);
+    glAttachShader(g_GL.prog, f);
+    glLinkProgram(g_GL.prog);
 
-    glUseProgram(prog);
+    glUseProgram(g_GL.prog);
 
     // One “pixel” coord in NDC (-1..1)
     glPointSize(5.0f);  // size of your “pixel”
 }
 
+void djVisualsInitOnceoff(const int N)
+{
+    if (N<0) return;
+    if (g_GL.N<=0 || g_GL.vertexarray==nullptr || N!=g_GL.N)
+    {
+        // Allocate host arrays to hold positions
+        if (g_GL.vertexarray) delete[]g_GL.vertexarray;
+
+        // Allocate twice the size for x and y
+        // Our incoming data is in separate arrays for x and y (for GPU kernel optimization reasons eg warp threads memory access speed), but we want to interleave them for OpenGL
+        // [x0,y0, x1,y1, x2,y2, ...] easier for OpenGL to consume
+        g_GL.vertexarray = new float[N * 2]; // x and y
+        memset(g_GL.vertexarray, 0, N * 2 * sizeof(float));
+
+        // Save size
+        g_GL.N = N;
+
+        glGenVertexArrays(1, &g_GL.vao);
+        glGenBuffers(1, &g_GL.vbo);
+
+        glBindVertexArray(g_GL.vao);
+        glBindBuffer(GL_ARRAY_BUFFER, g_GL.vbo);
+
+        // allocate the max needed size ONCE
+        glBufferData(GL_ARRAY_BUFFER, N * 2 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
+
+        // set vertex layout
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+    }
+}
+
 void djVisualsDraw(float *h_x, float* h_y, float* h_z, float* radius, const int N)
 {
+    djVisualsInitOnceoff(N);
+
+    // This scale is/was meant for things like, say, if may be necessary to scale to window width/height ...
+    //const float scaleX = 1.f;//800.f;
+    //const float scaleY = 1.f;//600.f;
+    const float drawoffsetX = 0.0f;
+    const float drawoffsetY = -0.95f;// should be near bottom of window
+
+    // If many more points, make the points smaller to scale and fit on screen better
+    const float basePointSize = 0.0f;//1.0f;
+    if (N>=100000)
+        glPointSize(0.5f + basePointSize);
+    else if (N>=20000)
+        glPointSize(0.8f + basePointSize);
+    else if (N>=10000)
+        glPointSize(1.0f + basePointSize);
+    else if (N>=5000)
+        glPointSize(2.0f + basePointSize);
+    else
+        glPointSize(3.0f);
+
+    // LOOP THROUGH BOUNCING BALLS' POSITIONS AND DRAW
+    for ( int i = 0; i < N; ++i ) {
+        //g_x[0] = h_x[i] + drawoffsetX;
+        //g_y[1] = h_y[i] + drawoffsetY;
+        g_GL.vertexarray[i*2 + 0] = h_x[i] + drawoffsetX;
+        g_GL.vertexarray[i*2 + 1] = h_y[i] + drawoffsetY;
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, g_GL.vbo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, 2*N*sizeof(float), g_GL.vertexarray);
+    glBindVertexArray(g_GL.vao);
+    glDrawArrays(GL_POINTS, 0, N);// Draw all points at once
+}
+
+void djVisualsDrawOld(float *h_x, float* h_y, float* h_z, float* radius, const int N)
+{
     // One "pixel" coord in NDC (-1..1)
-    //float px = -0.2f;
-    //float py =  0.3f;
     float pts[2] = { 0.0f, 0.0f };
 
     GLuint vao, vbo;
@@ -107,10 +186,10 @@ void djVisualsDraw(float *h_x, float* h_y, float* h_z, float* radius, const int 
     //glUseProgram(prog);
 
     // This scale is/was meant for things like, say, if may be necessary to scale to window width/height ...
-    const float scaleX = 1.f;//800.f;
-    const float scaleY = 1.f;//600.f;
+    //const float scaleX = 1.f;//800.f;
+    //const float scaleY = 1.f;//600.f;
     const float drawoffsetX = 0.f;
-    const float drawoffsetY = -0.95f;// should be near bottom of window
+    const float drawoffsetY = -0.8f;// should be near bottom of window
 
     // If many more points, make the points smaller to scale and fit on screen better
     const float basePointSize = 0.0f;//1.0f;

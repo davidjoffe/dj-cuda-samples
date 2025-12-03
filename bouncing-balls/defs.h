@@ -34,6 +34,8 @@ extern void djDoUpdate(StructOfArrays_Balls* d_data, float dt, int N);
 // An ncurses-based visualization for, say, Docker could then also easily be an option ...
 
 extern void djVisualsInit();
+// Keep old around a bit for correctness reference until sure new one is solid
+extern void djVisualsDrawOld(float *h_x, float* h_y, float* h_z, float* radius, const int N);
 extern void djVisualsDraw(float *h_x, float* h_y, float* h_z, float* radius, const int N);
 
 #endif // _DJ_BOUNCING_BALLS_DEFS_H_
