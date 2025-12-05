@@ -132,8 +132,12 @@ int main(int argc, char** argv) {
     //const int N = 1024;
     //int N = 10000;//1024;//NUMBALLS;
     int N = 20000;
+    //bool fullsreen=false;
+    int w = 800;//1920
+    int h = 600;//1080
 
     // PARSE COMMAND LINE ARGUMENTS the standard old way
+    // See comments at https://x.com/d_joffe/status/1997001768384057815
     for (int i=1; i<argc; ++i) {
         //if (std::string(argv[i]) == "--no-gfx")//future? headless ..
         //    visual = false;
@@ -172,7 +176,8 @@ int main(int argc, char** argv) {
     std::string title = "dj CUDA Sample - Bouncing Balls";
     title = title + " - ";
     title = title + std::to_string(N) + " particles"; // not quite sure about word 'particles' ... these may be more than just particles ...
-    GLFWwindow* window = glfwCreateWindow(800, 600, title.c_str(), nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(w, h, title.c_str(), nullptr, nullptr);
+//    GLFWwindow* window = glfwCreateWindow(1920, 1080, title.c_str(), nullptr, nullptr);
     if (!window) {
         std::cerr << "Failed to create GLFW window\n";
         glfwTerminate();
