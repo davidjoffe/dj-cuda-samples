@@ -6,6 +6,8 @@
 // https://github.com/davidjoffe/dj-cuda-samples
 // Copyright David Joffe 2025
 
+ // Ideas (future): Allow user to pass own .vert/.frag for custom visualization extendibility?
+
 #include <iostream>
 #include <cuda_runtime.h>
 #include "defs.h"
@@ -115,6 +117,13 @@ void StructOfArrays_Balls::cleanup()
 
 
 int main(int argc, char** argv) {
+    // Number of balls/particles/entities:
+    int N = 20000;
+    bool paused = false;
+    bool fullscreen = false;
+    int w = 1920;//1920
+    int h = 1080;//1080
+
     std::cout << "===========================================" << std::endl;
     std::cout << "dj CUDA sample" << std::endl;
     std::cout << "Keys:" << std::endl;
@@ -122,19 +131,11 @@ int main(int argc, char** argv) {
     std::cout << "    ESC   Exit" << std::endl;
     std::cout << "-------------------------------------------" << std::endl;
     std::cout << "Command line options:" << std::endl;
-    std::cout << "   --paused   Start paused" << std::endl;
-    std::cout << "   -N / --n   Number of particles/entities" << std::endl;
+    std::cout << "   --paused          Start paused" << std::endl;
+    std::cout << "   -N  --n           Number of particles/entities (default: " << N << ")" << std::endl;
+    std::cout << "   -f  --fullscreen  Fullscreen mode" << std::endl;
     std::cout << "===========================================" << std::endl;
 
-    bool paused = false;
-    //const int NUMBALLS = 10000;
-    //const int NUMBALLS = 100000;
-    //const int N = 1024;
-    //int N = 10000;//1024;//NUMBALLS;
-    int N = 20000;
-    //bool fullsreen=false;
-    int w = 800;//1920
-    int h = 600;//1080
 
     // PARSE COMMAND LINE ARGUMENTS the standard old way
     // See comments at https://x.com/d_joffe/status/1997001768384057815
@@ -144,6 +145,8 @@ int main(int argc, char** argv) {
         // todo - future (low prio) some combined system to dual-handle these as either say command line args, or say user settings to load/save
         if (std::string(argv[i]) == "--paused")
             paused = true;
+        else if (std::string(argv[i]) == "-f" || std::string(argv[i]) == "--fullscreen")
+            fullscreen = true;
         else if (
             (std::string(argv[i]) == "-N" || std::string(argv[i]) == "--n")
             && i+1<argc) {
@@ -156,7 +159,10 @@ int main(int argc, char** argv) {
     
     // Display settings before we start
     if (paused) std::cout << "Starting paused" << std::endl;
+    //std::cout << "Start paused: " << (paused ? "Yes" : "No") << std::endl;
+    std::cout << "Fullscreen: " << (fullscreen ? "Yes" : "No") << std::endl;
     std::cout << "Particles: N=" << N << std::endl;
+    std::cout << "Window size: " << w << " x " << h << std::endl;
 
     // (1) INIT
    
@@ -176,7 +182,7 @@ int main(int argc, char** argv) {
     std::string title = "dj CUDA Sample - Bouncing Balls";
     title = title + " - ";
     title = title + std::to_string(N) + " particles"; // not quite sure about word 'particles' ... these may be more than just particles ...
-    GLFWwindow* window = glfwCreateWindow(w, h, title.c_str(), nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(w, h, title.c_str(), fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
 //    GLFWwindow* window = glfwCreateWindow(1920, 1080, title.c_str(), nullptr, nullptr);
     if (!window) {
         std::cerr << "Failed to create GLFW window\n";
@@ -264,7 +270,25 @@ int main(int argc, char** argv) {
 
         // Run GPU kernel parallel update function
         if (!paused)
-            djDoUpdate(d_balls, dt, N);//0.016f);
+        {
+            // Add a delta-time accumulation here to make it more deterministic not frame-rate dependent or update-rate dependent
+            // This helps prevent determinism issues such as cross-platform differences in bouncing ball behaviour stemming from e.g. differences in how GL VSYNC is handled for drawing etc.
+            // We ideally want the simulation update to be as stable and deterministic as possible, so we run updates at a fixed rate internally regardless of rendering frame rate
+            // This is at a slight performance impact but if we want stability/determinism it's worth it.
+            // If you don't care about that, and more interested in fastest performance, you can just call djDoUpdate(d_balls, dt, N); directly instead and get a pip faster performance
+            // (Note also that static's are fine only if we don't have multiple CPU threads here doing this. If we later need that could use threadlocal storage specifier instead of static.)
+            static float accumDt = 0.f;
+            accumDt += dt;
+            // This should be a command line option later ... for now hardcode
+            //const float stablerate = (1.0f / 300.0f);
+            const float stablerate = (1.0f / 180.0f);
+            while (accumDt >= stablerate) // update at fixed time intervals for more stable behavior
+            {
+                djDoUpdate(d_balls, stablerate, N);
+                accumDt -= stablerate;
+            }
+            //djDoUpdate(d_balls, dt, N);//0.016f);
+        }
 
         // Copy positions etc. from GPU to CPU for visualization
         cudaMemcpy(h_x, h_balls.x, N*sizeof(float), cudaMemcpyDeviceToHost);

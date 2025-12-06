@@ -65,8 +65,11 @@ cmake --build build-linux
 
 ```
    --paused   Start paused
-   -N / --n   Number of particles/entities
+   -N / --n   Number of particles/entities (default 20,000)
+   -f / --fullscreen  Fullscreen mode
 ```
+
+To give some guideline, on a GPU such as an NVIDIA RTX 4060, it can smoothly handle over 1,000,000 particles / bouncing balls.
 
 ### Installing Dependencies:
 
