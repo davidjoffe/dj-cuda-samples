@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dj-cuda-balls
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dj-cuda-balls
+  template:
+    metadata:
+      labels:
+        app: dj-cuda-balls
+    spec:
+      containers:
+      - name: dj-cuda-balls
+        image: davidjoffe/dj-cuda-sample:latest
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+      restartPolicy: Always
+    
