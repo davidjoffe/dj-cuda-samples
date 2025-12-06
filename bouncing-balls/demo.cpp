@@ -123,6 +123,8 @@ int main(int argc, char** argv) {
     bool fullscreen = false;
     int w = 1920;//1920
     int h = 1080;//1080
+    bool headless = false; // No graphics (either by choice such as command line option, or due to failure to init GL such as running in Docker)
+    int maxframes = -1; // -1 = unlimited
 
     std::cout << "===========================================" << std::endl;
     std::cout << "dj CUDA sample" << std::endl;
@@ -134,6 +136,8 @@ int main(int argc, char** argv) {
     std::cout << "   --paused          Start paused" << std::endl;
     std::cout << "   -N  --n           Number of particles/entities (default: " << N << ")" << std::endl;
     std::cout << "   -f  --fullscreen  Fullscreen mode" << std::endl;
+    std::cout << "   -M  --maxframes N    Exit after N frames (default: unlimited)" << std::endl;
+    std::cout << "   --headless           Headless mode (no graphics)" << std::endl;
     std::cout << "===========================================" << std::endl;
 
 
@@ -145,6 +149,8 @@ int main(int argc, char** argv) {
         // todo - future (low prio) some combined system to dual-handle these as either say command line args, or say user settings to load/save
         if (std::string(argv[i]) == "--paused")
             paused = true;
+        else if (std::string(argv[i]) == "--headless")
+            headless = true;
         else if (std::string(argv[i]) == "-f" || std::string(argv[i]) == "--fullscreen")
             fullscreen = true;
         else if (
@@ -153,8 +159,11 @@ int main(int argc, char** argv) {
             N = std::atoi(argv[i+1]);
             ++i; // skip next as we've used it as parameter
         }
-        //else // maybe later
-            //N = std::atoi(argv[i]);
+        else if ((std::string(argv[i]) == "-M" || std::string(argv[i]) == "--maxframes")
+            && i+1<argc) {
+            maxframes = std::atoi(argv[i+1]);
+            ++i; // skip next as we've used it as parameter
+        }
     }
     
     // Display settings before we start
@@ -163,16 +172,29 @@ int main(int argc, char** argv) {
     std::cout << "Fullscreen: " << (fullscreen ? "Yes" : "No") << std::endl;
     std::cout << "Particles: N=" << N << std::endl;
     std::cout << "Window size: " << w << " x " << h << std::endl;
+    std::cout << "Headless: " << (headless ? "Yes" : "No") << std::endl;
+    std::cout << "Max frames: " << (maxframes<0 ? "Unlimited" : std::to_string(maxframes)) << std::endl;
 
     // (1) INIT
    
     // Init GLFW
+    bool haveGL = false;
     if (!glfwInit()) {
-        std::cerr << "Failed to init GLFW\n";
-        return -1;
+        std::cerr << "Failed to init GLFW.\n";
+        std::cout << "Falling back to headless mode." << std::endl;
+        headless = true;
+        maxframes = 500; // in headless mode we must have a max frames to avoid infinite loop
+        //return -1;
+        std::cout << "Headless: " << (headless ? "Yes" : "No") << std::endl;
+        std::cout << "Max frames: " << (maxframes<0 ? "Unlimited" : std::to_string(maxframes)) << std::endl;
+    }
+    else {
+        haveGL = true;
     }
 
     // Optional: Request OpenGL version
+    GLFWwindow* window = nullptr;
+    if (haveGL && !headless) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -182,7 +204,7 @@ int main(int argc, char** argv) {
     std::string title = "dj CUDA Sample - Bouncing Balls";
     title = title + " - ";
     title = title + std::to_string(N) + " particles"; // not quite sure about word 'particles' ... these may be more than just particles ...
-    GLFWwindow* window = glfwCreateWindow(w, h, title.c_str(), fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
+    window = glfwCreateWindow(w, h, title.c_str(), fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
 //    GLFWwindow* window = glfwCreateWindow(1920, 1080, title.c_str(), nullptr, nullptr);
     if (!window) {
         std::cerr << "Failed to create GLFW window\n";
@@ -205,6 +227,7 @@ int main(int argc, char** argv) {
     // Enable VSYNC (0 for unlimited)
     // dj2025-11 note - on WSL Linux this seems to have no effect currently, so we get uncapped framerates (other than our sleep below)
     glfwSwapInterval(1);
+    }
 
 
     std::cout << "Initializing demo data..." << std::endl;
@@ -234,7 +257,8 @@ int main(int argc, char** argv) {
         cudaMemcpyHostToDevice);
 
     // Initialize visualization(s)
-    djVisualsInit();
+    if (haveGL && !headless)
+        djVisualsInit();
 
     // Copy positions etc. to CPU for visualization
     float* h_x = new float[N];
@@ -243,6 +267,77 @@ int main(int argc, char** argv) {
     memset(h_y, 0, N*sizeof(float));
 
     // (2) Main loop
+    std::cout << "STARTING" << std::endl;
+    if (!haveGL || headless)
+    {
+        // HEADLESS MODE
+        if (maxframes <= 0) {
+            // It's debatable whether to allow user to do this or not ...
+            std::cout << "WARNING No maxframes specified in headless mode, may run forever!" << std::endl;
+            //return -1;  
+        }
+        bool running = true;
+        auto lastFrameTime = std::chrono::high_resolution_clock::now();
+        while (running)
+        {
+            // todo - possibly optimize here, check how many times we call outer loop vs actual updates etc. ... profile / test etc.
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+            // Calculate delta-time (time passed since last frame) for updates
+            auto now = std::chrono::high_resolution_clock::now();
+            float dt = std::chrono::duration<float>(now - lastFrameTime).count();
+            lastFrameTime = now;
+
+            //verbose//std::cout << dt << std::endl;
+
+            // Use a delta-time accumulation here to make it more deterministic not frame-rate dependent or update-rate dependent
+            // This helps prevent determinism issues such as cross-platform differences in bouncing ball behaviour stemming from e.g. differences in how GL VSYNC is handled for drawing etc.
+            // We ideally want the simulation update to be as stable and deterministic as possible, so we run updates at a fixed rate internally regardless of rendering frame rate
+            // This is at a slight performance impact but if we want stability/determinism it's worth it.
+            // If you don't care about that, and more interested in fastest performance, you can just call djDoUpdate(d_balls, dt, N); directly instead and get a pip faster performance
+            // (Note also that static's are fine only if we don't have multiple CPU threads here doing this. If we later need that could use threadlocal storage specifier instead of static.)
+            static float accumDt = 0.f;
+            accumDt += dt;
+            //verbose//std::cout << "Accum dt: " << accumDt << std::endl;
+            // This should be a command line option later ... for now hardcode
+            //const float stablerate = (1.0f / 300.0f);
+            const float stablerate = (1.0f / 180.0f);
+            if (accumDt >= stablerate)
+            {
+                //verbose//std::cout << "UPDATE" << std::endl;
+                while (accumDt >= stablerate) // update at fixed time intervals for more stable behavior
+                {
+                    djDoUpdate(d_balls, stablerate, N);
+                    //verbose//std::cout << "DONE" << std::endl;
+                    //cudaDeviceSynchronize();// <- without these WSL may run forever, but we don't want to add it to windowed mode path as that would slow it down unnecessarily
+                    //verbose//std::cout << "SYNCED" << std::endl;
+                    ++g_stats.updateCountAccum;
+                    accumDt -= stablerate;
+                }
+                //djDoUpdate(d_balls, dt, N);//0.016f);
+
+                // Copy positions etc. from GPU to CPU for visualization
+                //cudaMemcpy(h_x, h_balls.x, N*sizeof(float), cudaMemcpyDeviceToHost);
+                //cudaMemcpy(h_y, h_balls.y, N*sizeof(float), cudaMemcpyDeviceToHost);
+
+                // STATS
+                ++g_stats.updateCount;
+                ++g_stats.frameCount; // "++foo" may in some cases optimize better than "foo++"
+                g_stats.frameTimeTotal += dt;
+            }
+
+            // Exit if reached maxframes
+            if (maxframes > 0 && g_stats.frameCount >= maxframes)
+            {
+                running = false;
+                std::cout << "Max frames reached in headless mode" << std::endl;
+            }
+        }
+
+    }
+    else
+    {
     //bool paused = startpaused; // User may optionally 'start paused' etc.
     std::cout << "Starting main loop. Close window or press ESC to exit." << std::endl;
     auto lastFrameTime = std::chrono::high_resolution_clock::now();
@@ -285,6 +380,7 @@ int main(int argc, char** argv) {
             while (accumDt >= stablerate) // update at fixed time intervals for more stable behavior
             {
                 djDoUpdate(d_balls, stablerate, N);
+                ++g_stats.updateCountAccum;
                 accumDt -= stablerate;
             }
             //djDoUpdate(d_balls, dt, N);//0.016f);
@@ -323,7 +419,14 @@ int main(int argc, char** argv) {
         //stats.fps = 1.0f / dt;
 
         glfwPollEvents();
-     }
+
+        // Also close if reached maxframes (if maxframes has been specified, even in windowed mode)
+        if (maxframes > 0 && g_stats.frameCount >= maxframes)
+        {
+            glfwSetWindowShouldClose(window, true);
+        }
+    }
+    }
 
     // (3) Cleanup
     // This is a little dicey: Remember, h_balls lives in CPU memory but not only cleans the GPU 
@@ -335,8 +438,10 @@ int main(int argc, char** argv) {
     if (d_balls!=nullptr) cudaFree(d_balls);
     d_balls = nullptr;//<- sanity safety measure to help avoid dangling pointers (even though we're about to exit this is a good habit that can prevent bugs in some cases)
 
-    glfwDestroyWindow(window);
-    glfwTerminate(); 
+    if (haveGL && !headless) {
+        glfwDestroyWindow(window);
+        glfwTerminate(); 
+    }
 
     // STATS/INFO
     std::cout << "Particles: " << N << std::endl;
@@ -353,6 +458,7 @@ int main(int argc, char** argv) {
         std::cout << "Average frame time (ms): " << (g_stats.frameTimeTotal / g_stats.frameCount * 1000.0f) << std::endl;
     std::cout << "Total frames: " << g_stats.frameCount << std::endl;
     std::cout << "Total updates: " << g_stats.updateCount << std::endl;
+    std::cout << "Total updates (accum): " << g_stats.updateCountAccum << std::endl;
 
     // Set to null even though we're 'about to exit' is a good habit just in case someone later tries to add code below dereferencing these pointers
     delete[] h_x;
