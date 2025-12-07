@@ -9,7 +9,7 @@
 
     
 #FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
-FROM nvidia/cuda:12.5.1-devel-ubuntu24.04
+FROM nvidia/cuda:12.5.1-devel-ubuntu24.04 AS builder
 
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -24,12 +24,24 @@ RUN apt-get update && apt-get install -y \
     libxcursor-dev \
     && rm -rf /var/lib/apt/lists/*
 
-#FROM dj-cuda-base
-
 WORKDIR /app
 
-COPY . /app
+# Copy only the essential files, not the whole repo
+COPY CMakeLists.txt ./
+COPY external/ ./external/
+COPY src/ ./src/
+COPY bouncing-balls/ ./bouncing-balls/
 
 RUN cmake -S . -B build-docker && cmake --build build-docker -j 8
 
-CMD ["./build-docker/bouncing-balls/djbouncing_balls_demo"]
+# ===============================
+#   RUNTIME STAGE
+# ===============================
+FROM nvidia/cuda:12.5.1-runtime-ubuntu24.04
+
+WORKDIR /
+
+# Copy ONLY the final binary to keep the image small
+COPY --from=builder /app/build-docker/bouncing-balls/djbouncing_balls_demo /usr/local/bin/
+
+CMD ["djbouncing_balls_demo"]
