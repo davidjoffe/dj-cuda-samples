@@ -11,12 +11,15 @@ spec:
     metadata:
       labels:
         app: dj-cuda-balls
+      annotations:
+        nvidia.com/gpu: "1"
     spec:
       containers:
       - name: dj-cuda-balls
-        image: davidjoffe/dj-cuda-sample:latest
+        image: davidjoffe/dj-cuda-samples:latest
         resources:
           limits:
             nvidia.com/gpu: 1
+        securityContext:
+          privileged: true
       restartPolicy: Always
-    
