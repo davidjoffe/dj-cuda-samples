@@ -8,6 +8,14 @@
 
  // Ideas (future): Allow user to pass own .vert/.frag for custom visualization extendibility?
 
+/*
+When running with visuals, the viewer typically expects delta-time to cause the balls to move at realistic looking speed.
+Regarding the idea of headless mode, there are two types of situations to consider:
+1. Imagine this is something like a game server generating visuals, then again it should consider delta time for realistic looking time passing
+2. Alternatively, we may just want it to 'run the simulation as fast as you can' and finish, e.g. if this wa ssomething like molecular simulation, or we just want to get this task done as quickly as possible for the user.
+In such case, we maybe don't want to sleep, and though we may still want to use some sort of constant delta time for the physics e.g. say 120Hz or 100Hz or 60Hz or whatever we need for simulation fidelity, we call the GPU kernel update as fast as possible with this fixed time-step, so we have a 'virtual' delta tmie and a real delta time which may be either faster or slower depending how fast the hardware is.
+*/
+
 #include <iostream>
 #include <cuda_runtime.h>
 #include "defs.h"
@@ -277,17 +285,17 @@ int main(int argc, char** argv) {
             //return -1;  
         }
         bool running = true;
-        auto lastFrameTime = std::chrono::high_resolution_clock::now();
+        auto startTime = std::chrono::high_resolution_clock::now();
         while (running)
         {
             // todo - possibly optimize here, check how many times we call outer loop vs actual updates etc. ... profile / test etc.
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            //std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
             // Calculate delta-time (time passed since last frame) for updates
-            auto now = std::chrono::high_resolution_clock::now();
-            float dt = std::chrono::duration<float>(now - lastFrameTime).count();
-            lastFrameTime = now;
+            //auto now = std::chrono::high_resolution_clock::now();
+            //float dt = std::chrono::duration<float>(now - lastFrameTime).count();
+            //lastFrameTime = now;
 
             //verbose//std::cout << dt << std::endl;
 
@@ -298,11 +306,12 @@ int main(int argc, char** argv) {
             // If you don't care about that, and more interested in fastest performance, you can just call djDoUpdate(d_balls, dt, N); directly instead and get a pip faster performance
             // (Note also that static's are fine only if we don't have multiple CPU threads here doing this. If we later need that could use threadlocal storage specifier instead of static.)
             static float accumDt = 0.f;
-            accumDt += dt;
+            //accumDt += dt;
             //verbose//std::cout << "Accum dt: " << accumDt << std::endl;
             // This should be a command line option later ... for now hardcode
             //const float stablerate = (1.0f / 300.0f);
             const float stablerate = (1.0f / 180.0f);
+            accumDt += stablerate;
             if (accumDt >= stablerate)
             {
                 //verbose//std::cout << "UPDATE" << std::endl;
@@ -324,7 +333,9 @@ int main(int argc, char** argv) {
                 // STATS
                 ++g_stats.updateCount;
                 ++g_stats.frameCount; // "++foo" may in some cases optimize better than "foo++"
-                g_stats.frameTimeTotal += dt;
+                // todo - we need two total times, the virtual simulation time passed, and actual human time passed
+                g_stats.frameTimeTotal += stablerate;
+                //g_stats.frameTimeTotal += dt;
             }
 
             // Exit if reached maxframes
@@ -332,13 +343,16 @@ int main(int argc, char** argv) {
             {
                 running = false;
                 std::cout << "Max frames reached in headless mode" << std::endl;
+
+                auto now = std::chrono::high_resolution_clock::now();
+                float dt = std::chrono::duration<float>(now - startTime).count();
+                std::cout << "Time taken (s): " << g_stats.frameTimeTotal + dt << std::endl;
             }
         }
 
     }
     else
     {
-    //bool paused = startpaused; // User may optionally 'start paused' etc.
     std::cout << "Starting main loop. Close window or press ESC to exit." << std::endl;
     auto lastFrameTime = std::chrono::high_resolution_clock::now();
     while (!glfwWindowShouldClose(window)) {
@@ -377,13 +391,18 @@ int main(int argc, char** argv) {
             // This should be a command line option later ... for now hardcode
             //const float stablerate = (1.0f / 300.0f);
             const float stablerate = (1.0f / 180.0f);
-            while (accumDt >= stablerate) // update at fixed time intervals for more stable behavior
+            if (accumDt >= stablerate)
             {
-                djDoUpdate(d_balls, stablerate, N);
-                ++g_stats.updateCountAccum;
-                accumDt -= stablerate;
+                while (accumDt >= stablerate) // update at fixed time intervals for more stable behavior
+                {
+                    djDoUpdate(d_balls, stablerate, N);
+                    ++g_stats.updateCountAccum;
+                    accumDt -= stablerate;
+                }
+                //djDoUpdate(d_balls, dt, N);//0.016f);
+                // STATS. This is considered a single 'update' in the stats but multiple possible 'stable-rate' updates.
+                ++g_stats.updateCount;
             }
-            //djDoUpdate(d_balls, dt, N);//0.016f);
         }
 
         // Copy positions etc. from GPU to CPU for visualization
@@ -410,7 +429,6 @@ int main(int argc, char** argv) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         // STATS
-        ++g_stats.updateCount;
         if (!paused)
         {
             ++g_stats.frameCount; // "++foo" may in some cases optimize better than "foo++"
