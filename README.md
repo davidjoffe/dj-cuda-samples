@@ -65,10 +65,11 @@ cmake --build build-linux
 
 ```
    --paused   Start paused
-   -N / --n   Number of particles/entities (default 20,000)
+   -N / --n   Number of particles/entities (default 100,000)
    -f / --fullscreen  Fullscreen mode
    -M  --maxframes N    Exit after N frames (default: unlimited)
    --headless           Headless mode (no graphics)
+   --rate R             Optional fixed/deterministic simulation update rate (updates per second)
 ```
 
 To give some guideline, on a GPU such as an NVIDIA RTX 4060, it can smoothly handle over 1,000,000 particles / bouncing balls.
@@ -102,6 +103,8 @@ If you get a build error about glfw3 cmake config not found, first try set your 
 For Windows, you should build from a Developer Command Prompt for VS.
 
 ## Docker (Optional)
+
+If running in a Docker container it automatically falls back to headless mode, runs a fixed number of simulation steps, then exits.
 
 Note Docker support is completely **optional**.
 
