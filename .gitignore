@@ -7,4 +7,5 @@
 
 # CMake build folders
 /build-linux/
+/build-windows/
 /build/
