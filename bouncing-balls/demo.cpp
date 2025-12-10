@@ -527,6 +527,16 @@ int main(int argc, char** argv) {
     std::cout << "Total frames: " << g_stats.frameCount << std::endl;
     std::cout << "Total updates: " << g_stats.updateCount << std::endl;
     std::cout << "Total updates (accum): " << g_stats.updateCountAccum << std::endl;
+    // Log major stats that are 'benchmark-interesting' on single line for more easily working with and checking and reviewing and automating benchmark and test runs:
+    std::cout << "BENCH: rate=" << std::to_string(rate) 
+              << " N=" << N 
+              // the names of these are a bit off/misleading in headless mode especially - todo make it a bit clearer later
+              << " avgFPS=" << g_stats.averageFPS 
+              << " avgUpdatesPerSecond=" << g_stats.averageUpdatesPerSecond 
+              << " totalTime=" << g_stats.frameTimeTotal 
+              << " totalFrames=" << g_stats.frameCount 
+              << std::endl;
+
 
     // Set to null even though we're 'about to exit' is a good habit just in case someone later tries to add code below dereferencing these pointers
     delete[] h_x;
