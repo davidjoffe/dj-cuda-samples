@@ -23,12 +23,22 @@ rem If you get errors about "FindGLFW3.cmake" and CMAKE_MODULE_PATH try set your
 set VCPKG=C:\v
 
 rem clean
-rd /s /q build
+rd /s /q build-windows
+rd /s /q build-windows-debug
 
+@echo dj-build: Building dj CUDA samples with vcpkg and cmake
+@echo dj-build: Building both debug and release versions
+
+@echo dj-build: Build debug version (slower but include debug info in case we need to debug)
+cmake -S . -B build-windows-debug -DCMAKE_TOOLCHAIN_FILE=%VCPKG%/scripts/buildsystems/vcpkg.cmake
+cmake --build build-windows-debug
+
+@echo dj-build: Build release version (faster, better for benchmarking and final user runs with more optimal performance)
 cmake -S . -B build-windows -DCMAKE_TOOLCHAIN_FILE=%VCPKG%/scripts/buildsystems/vcpkg.cmake
-cmake --build build-windows
+cmake --build build-windows --config Release -j
+
 
 @rem run the built application
 @rem Just pass in passed-in command line args to this script, that allows us to call build with different args to pass to the auto run here:
-@echo dj:build-windows: Run djbouncing_balls_demo.exe %*
-".\build-windows\bouncing-balls\Debug\djbouncing_balls_demo.exe" %*
+@echo dj:build: Run djbouncing_balls_demo.exe %*
+".\build-windows\bouncing-balls\Release\djbouncing_balls_demo.exe" %*
