@@ -10,15 +10,26 @@
 # ./build.sh --paused
 # ./build.sh -N 1000000 --headless --maxframes 1000
 
+# stop on build errors
+set -e
+
 # Clean previous build if any
 rm -rf build-linux
+rm -rf build-linux-debug
 
 # Build
-cmake -S . -B build-linux
-cmake --build build-linux
+# -j speeds up builds by using multiple CPU cores (nproc retrieves your system's number of CPU cores you are building on so -j tells it to use the number of cores you have)
+
+echo "dj-build-linux: Building Release"
+cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release
+cmake --build build-linux --config Release -- -j$(nproc)
+
+echo "dj-build-linux: Building Debug"
+cmake -S . -B build-linux-debug -DCMAKE_BUILD_TYPE=Debug
+cmake --build build-linux-debug --config Debug -- -j$(nproc)
 
 # Run
 # Just pass in passed-in command line args to this script, that allows us to call build with different args to pass to the auto run here:
 #./build-linux/bouncing-balls/djbouncing_balls_demo --paused -N 200000  --headless --maxframes 10000
-@echo dj:build-linux: Run app $@
+echo dj-build-linux: Run app $@
 ./build-linux/bouncing-balls/djbouncing_balls_demo $@
