@@ -11,7 +11,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Default GPU arch = my RTX 4060 laptop (sm_89)
 if (NOT DEFINED CUDA_ARCH)
-    set(CUDA_ARCH 89)
+    # Generate fat binary for multiple GPU architectures:
+    # 89 for rtx 4000-series, 86 for 3000-series like RTX 3090
+    # Adjust as needed for your GPU:
+    set(CMAKE_CUDA_ARCHITECTURES "86;89")
+    # 4000-series only: set(CUDA_ARCH 89)
 endif()
 
 set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCH})
