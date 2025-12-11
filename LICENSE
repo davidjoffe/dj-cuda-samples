@@ -15,7 +15,12 @@ The Licensor hereby grants you the right to copy, modify, create derivative work
 
 2. Production Use
 
-“Production Use” means any use of the Licensed Work, in whole or in part, in any commercial, revenue-generating, or production environment, including but not limited to providing services, running workloads, creating products, or deploying the Licensed Work inside any organization for operational purposes. "Production Use" also includes any use of the Licensed Work in any environment or situation where the results, outputs, analyses or derived data of or produced by the Licensed Work contribute directly or indirectly to revenue generation, commercial value, commercial decision-making, R&D value, product development, or financial gain.
+“Production Use” means any use of the Licensed Work, in whole or in part, in any commercial, revenue-generating, or production environment, including but not limited to providing services, running workloads, creating products, or deploying the Licensed Work inside any organization for operational purposes, including but not limited to:
+* running workloads, simulations, analyses, or computations
+* providing services or forming part of a commercial workflow
+* creating, discovering, or validating products, research outputs, designs, molecules, models, or data
+* any internal use inside an organization that supports business operations
+"Production Use" also includes any use of the Licensed Work in any environment or situation where the results, outputs, analyses or derived data of or produced by the Licensed Work contribute directly or indirectly to revenue generation, commercial value, commercial decision-making, R&D value, product development, or financial gain.
 
 Any commercial use, paid use, or production deployment requires a separate commercial license from the Licensor (David Joffe and DJ Software).
 
