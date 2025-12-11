@@ -6,6 +6,8 @@ A growing collection of small CUDA cross-platform learning samples by David Joff
 
 [CUDA Sample(s)/demo by David Joffe](https://github.com/davidjoffe/dj-cuda-samples)
 
+* [LinkedIn](https://www.linkedin.com/in/david-joffe-50771b4/)
+
 ## Samples:
 
 * Simple bouncing ball sample/demo
@@ -122,3 +124,49 @@ Note that if you have installed the NVIDIA Container Toolkit but still get a war
 ```docker build -t dj-cuda-sample1:local -f .\bouncing-balls\docker\Dockerfile .```
 
 ```docker run --gpus all --runtime=nvidia dj-cuda-sample1:local```
+
+## License
+
+dj-cuda-samples is released under the Business Source License 1.1 (BSL). See LICENSE file for details.
+
+This is a source-available license: you may read, modify, and use the code for non-commercial, non-production purposes.
+
+Any commercial, production, or revenue-generating use requires permission or a commercial license from DJ Software.
+
+This can include simple, low-cost arrangements or small-scale consulting engagements — the goal is to keep things flexible and accessible for individuals, indie developers, and researchers, while reserving larger commercial rights, and maintaining the ability to offer professional support (and/or training).
+
+Copyright © 2025 David Joffe and DJ Software.
+
+## How to Obtain a Commercial License or Support
+
+If you would like to use **dj-cuda-samples or any derivative work** in a production, commercial, or revenue-generating context, please contact DJ Software for permission or a commercial license.
+
+Licensing is kept **flexible and accessible**.
+
+For small independent developers, researchers, or hobby projects, commercial exceptions can often be granted through simple low-cost arrangements such as purchasing consulting time (such as support, training, or customization work) or a once-off small fee. For larger organizations, studios, or production deployments, full commercial licensing and support options are available.
+
+📧 Contact
+
+**David Joffe — DJ Software**
+Email: davjof@gmail.com
+
+When contacting, please include a brief description of your intended use so we can determine the simplest and most appropriate option for you.
+
+Commercial licensing and support help fund ongoing CUDA, GPU, and simulation research and development.
+
+## Roadmap
+
+The long-term direction for dj-cuda-samples is to grow from small, focused CUDA demonstrations into a broader ecosystem of high-performance GPU tools and experiments. Upcoming samples will highlight both foundational CUDA techniques and more advanced topics such as molecular simulation, procedural generation, and distributed GPU compute.
+
+## Vision
+
+The goal of this project is to create GPU-accelerated building blocks that can scale into genuinely meaningful, high-impact applications. Beyond graphics and gamedev, GPUs today underpin important work in:
+
+* aging and longevity research
+* molecular simulation and drug discovery
+* large-scale AI and scientific modelling
+* space exploration
+
+My intention is to grow dj-cuda-samples into a foundation from which more ambitious tools can emerge — systems that help move humanity forward.
+
+I’m also open to working with organizations or individuals who share these goals, whether through collaboration, sponsorship, consulting, or applied research partnerships.

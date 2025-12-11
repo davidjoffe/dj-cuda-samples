@@ -1,0 +1,70 @@
+LICENSE
+
+Business Source License 1.1
+
+Licensor: David Joffe and DJ Software
+Licensed Work: dj-cuda-samples (the “Licensed Work”)
+Additional Use Grant: Non-commercial, non-production use permitted
+Change Date: Not specified (no automatic conversion)
+Change License: Not applicable until a Change Date is designated
+
+Terms
+1. License Grant
+
+The Licensor hereby grants you the right to copy, modify, create derivative works, and redistribute the Licensed Work, provided that you do not use the Licensed Work for a Production Use.
+
+2. Production Use
+
+“Production Use” means any use of the Licensed Work, in whole or in part, in any commercial, revenue-generating, or production environment, including but not limited to providing services, running workloads, creating products, or deploying the Licensed Work inside any organization for operational purposes. "Production Use" also includes any use of the Licensed Work in any environment or situation where the results, outputs, analyses or derived data of or produced by the Licensed Work contribute directly or indirectly to revenue generation, commercial value, commercial decision-making, R&D value, product development, or financial gain.
+
+Any commercial use, paid use, or production deployment requires a separate commercial license from the Licensor (David Joffe and DJ Software).
+
+3. Restrictions
+
+The Licensed Work is provided under a Source Available license and is expressly not an Open Source License.
+
+Except for the rights explicitly granted in this License, the Licensor reserves all rights, including all commercial rights.
+You may not:
+
+Use the Licensed Work in any Production Use.
+
+Offer the Licensed Work as part of a commercial service.
+
+Re-license the Licensed Work under any other terms.
+
+Remove or alter copyright, license, or attribution notices.
+
+4. Notices
+
+You must preserve all copyright notices and attribution statements in all copies or substantial portions of the Licensed Work.
+
+Any Modified Version you distribute must prominently state that it is a derivative of the Licensed Work and must include a copy of this License.
+
+5. Change License
+
+No Change Date has been provided.
+Until a Change Date is designated in a future version of the Licensed Work, this License remains in effect indefinitely.
+
+If a future version of the Licensed Work specifies a Change Date, then on that date the Change License will apply to that version of the Licensed Work only.
+
+6. Trademarks
+
+This License does not grant any rights to use the names, logos, or trademarks of the Licensor, including “DJ Software,” except as required for attribution.
+
+7. Patents
+
+No patent rights are granted under this License.
+
+8. Disclaimer
+
+THE LICENSED WORK IS PROVIDED “AS IS,” WITHOUT WARRANTY OF ANY KIND.
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE LICENSOR DISCLAIMS ALL WARRANTIES, INCLUDING ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+9. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE LICENSOR SHALL NOT BE LIABLE FOR ANY DAMAGES, INCLUDING DIRECT, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, ARISING FROM THE USE OR INABILITY TO USE THE LICENSED WORK.
+
+Copyright
+
+© 2025 David Joffe and DJ Software.
+All rights reserved.
