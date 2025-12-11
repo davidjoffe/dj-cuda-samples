@@ -137,6 +137,7 @@ int main(int argc, char** argv) {
 
     std::cout << "===========================================" << std::endl;
     std::cout << "dj CUDA sample" << std::endl;
+    std::cout << "Version " << DJAPP_VERSION << std::endl;
     std::cout << "Keys:" << std::endl;
     std::cout << "    P     Pause/Unpause" << std::endl;
     std::cout << "    ESC   Exit" << std::endl;
@@ -528,7 +529,7 @@ int main(int argc, char** argv) {
     std::cout << "Total updates: " << g_stats.updateCount << std::endl;
     std::cout << "Total updates (accum): " << g_stats.updateCountAccum << std::endl;
     // Log major stats that are 'benchmark-interesting' on single line for more easily working with and checking and reviewing and automating benchmark and test runs:
-    std::cout << "BENCH: rate=" << std::to_string(rate) 
+    std::cout << "BENCH: ver=" << DJAPP_VERSION << " rate=" << std::to_string(rate) 
               << " N=" << N 
               // the names of these are a bit off/misleading in headless mode especially - todo make it a bit clearer later
               << " avgFPS=" << g_stats.averageFPS 
