@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: dj-cuda-balls
-        image: davidjoffe/dj-cuda-samples:latest
+        image: dj-cuda:local
         imagePullPolicy: IfNotPresent
         resources:
           limits:
