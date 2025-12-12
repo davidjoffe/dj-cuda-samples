@@ -31,5 +31,16 @@ cmake --build build-linux-debug --config Debug -- -j$(nproc)
 # Run
 # Just pass in passed-in command line args to this script, that allows us to call build with different args to pass to the auto run here:
 echo dj-build-linux: Run app $@
-./build-linux/samples/bouncing_balls/djbouncing_balls_demo $@
-./build-linux/samples/template_minimal/djtemplate_minimal $@
+
+# If building on a non-CUDA-supported platform then it may be normal for this to be not found, else it should be there:
+if [ ! -f ./build-linux/samples/bouncing_balls/djbouncing_balls_demo ]; then
+    echo "djbouncing_balls_demo not found"
+else
+    ./build-linux/samples/bouncing_balls/djbouncing_balls_demo $@
+fi
+
+if [ ! -f ./build-linux/samples/template_minimal/djtemplate_minimal ]; then
+    echo "djtemplate_minimal not found"
+else
+    ./build-linux/samples/template_minimal/djtemplate_minimal $@
+fi
