@@ -32,4 +32,4 @@ cmake --build build-linux-debug --config Debug -- -j$(nproc)
 # Just pass in passed-in command line args to this script, that allows us to call build with different args to pass to the auto run here:
 #./build-linux/bouncing-balls/djbouncing_balls_demo --paused -N 200000  --headless --maxframes 10000
 echo dj-build-linux: Run app $@
-./build-linux/bouncing-balls/djbouncing_balls_demo $@
+./build-linux/samples/bouncing_balls/djbouncing_balls_demo $@

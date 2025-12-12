@@ -41,4 +41,4 @@ cmake --build build-windows --config Release -j
 @rem run the built application
 @rem Just pass in passed-in command line args to this script, that allows us to call build with different args to pass to the auto run here:
 @echo dj:build: Run djbouncing_balls_demo.exe %*
-".\build-windows\bouncing-balls\Release\djbouncing_balls_demo.exe" %*
+".\build-windows\samples\bouncing_balls\Release\djbouncing_balls_demo.exe" %*
