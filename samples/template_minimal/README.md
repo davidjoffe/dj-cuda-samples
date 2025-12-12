@@ -1,5 +1,5 @@
-# DJ Template-Minimal
+# DJ Sample
 
-This is the sample readme for a minimal template sample for a simple C++ application.
+This is the project readme.
 
 [Project repo](https://github.com/davidjoffe/dj-cuda-samples)
