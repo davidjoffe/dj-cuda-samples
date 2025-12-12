@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.18)
 
 # Add C for glad GL loader ...
 project(dj_cuda_samples LANGUAGES C CXX CUDA)
@@ -63,4 +63,14 @@ set_target_properties(djcuda_core PROPERTIES
 # Subsamples
 # ================================================================
 add_subdirectory(samples/template_minimal)
-add_subdirectory(samples/bouncing_balls)
+
+# Check for CUDA support so on platforms that don't support it we can at least build samples that don't require it
+include(CheckLanguage)
+check_language(CUDA)
+if (CMAKE_CUDA_COMPILER)
+    enable_language(CUDA)
+    message(STATUS "dj-cmake: CUDA support detected")
+    add_subdirectory(samples/bouncing_balls)
+else()
+    message(STATUS "dj-cmake: CUDA not found - skipping projects that require it")
+endif()
