@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-# Add C for glad GL loader ...
-project(dj_cuda_samples LANGUAGES C CXX CUDA)
+project(dj_cuda_samples LANGUAGES C CXX)
 
 # ================================================================
 # Global Configuration
@@ -9,22 +8,34 @@ project(dj_cuda_samples LANGUAGES C CXX CUDA)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Default GPU arch = my RTX 4060 laptop (sm_89)
-if (NOT DEFINED CUDA_ARCH)
-    # Generate fat binary for multiple GPU architectures:
-    # 89 for rtx 4000-series, 86 for 3000-series like RTX 3090
-    # Adjust as needed for your GPU:
-    set(CMAKE_CUDA_ARCHITECTURES "86;89")
-    # 4000-series only: set(CUDA_ARCH 89)
-endif()
+include(CheckLanguage)
+check_language(CUDA)
 
-set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCH})
-message(STATUS "CUDA sm_${CUDA_ARCH}")
+if (CMAKE_CUDA_COMPILER)
+    message(STATUS "dj-cmake: CUDA support detected: ${CMAKE_CUDA_COMPILER}")
+
+    enable_language(CUDA)
+
+    # ------------------------------------------------------------
+    # CUDA architecture settings (only if CUDA is available)
+    # ------------------------------------------------------------
+    if (NOT DEFINED CUDA_ARCH)
+        # Generate fat binary for multiple GPU architectures:
+        # Default: build fat binary for 30xx + 40xx GPUs like RTX 3090 or RTX 4060
+        # Adjust if/as needed for your GPU:
+        set(CUDA_ARCH "86;89")
+    endif()
+
+    set(CMAKE_CUDA_ARCHITECTURES "${CUDA_ARCH}")
+    message(STATUS "dj-cmake: Building CUDA SM architectures: ${CMAKE_CUDA_ARCHITECTURES}")
+else()
+    message(STATUS "dj-cmake: CUDA not found - building CPU/OpenGL-only components")
+endif()
 
 include(cmake/warnings.cmake OPTIONAL)
 
 # ============================================================
-# GLAD OpenGL loader cmake library
+# GLAD OpenGL loader
 # ============================================================
 add_library(glad STATIC
     external/glad/src/glad.c
@@ -43,34 +54,42 @@ set_target_properties(glad PROPERTIES LINKER_LANGUAGE C)
 
 file(GLOB_RECURSE CORE_SRC
     src/*.cpp
-    src/*.cu
 )
+
+# Add *.cu files **only if CUDA is available**
+if (CMAKE_CUDA_COMPILER)
+    file(GLOB_RECURSE CORE_CUDA_SRC src/*.cu)
+    list(APPEND CORE_SRC ${CORE_CUDA_SRC})
+endif()
 
 add_library(djcuda_core STATIC ${CORE_SRC})
 
 target_include_directories(djcuda_core PUBLIC
     ${PROJECT_SOURCE_DIR}/include
-    # Below seems to be necessary otherwise docker build fails, unable to find cuda headers - dj2025
-    ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
 )
 
-set_target_properties(djcuda_core PROPERTIES
-    CUDA_SEPARABLE_COMPILATION ON
-    CUDA_RESOLVE_DEVICE_SYMBOLS ON
-)
+# CUDA-specific properties only if CUDA exists
+if (CMAKE_CUDA_COMPILER)
+    target_include_directories(djcuda_core PUBLIC
+        ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
+    )
+
+    set_target_properties(djcuda_core PROPERTIES
+        CUDA_SEPARABLE_COMPILATION ON
+        CUDA_RESOLVE_DEVICE_SYMBOLS ON
+    )
+endif()
 
 # ================================================================
-# Subsamples
+# Subsamples (platform independent ones)
 # ================================================================
 add_subdirectory(samples/template_minimal)
 
-# Check for CUDA support so on platforms that don't support it we can at least build samples that don't require it
-include(CheckLanguage)
-check_language(CUDA)
+# ================================================================
+# CUDA samples (only if CUDA compiler exists)
+# ================================================================
 if (CMAKE_CUDA_COMPILER)
-    enable_language(CUDA)
-    message(STATUS "dj-cmake: CUDA support detected")
     add_subdirectory(samples/bouncing_balls)
 else()
-    message(STATUS "dj-cmake: CUDA not found - skipping projects that require it")
+    message(STATUS "dj-cmake: Skipping CUDA projects (CUDA unavailable)")
 endif()
