@@ -62,4 +62,4 @@ set_target_properties(djcuda_core PROPERTIES
 # ================================================================
 # Subsamples
 # ================================================================
-add_subdirectory(bouncing-balls)
+add_subdirectory(samples/bouncing_balls)

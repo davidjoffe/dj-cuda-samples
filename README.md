@@ -123,7 +123,7 @@ It requires the NVIDIA Container Toolkit to be installed - see the NVIDIA guide 
 Note that if you have installed the NVIDIA Container Toolkit but still get a warning about the driver failing to load when you run the Docker version in Docker Desktop, try run from command line as per below to force GPU support via command line:
 
 
-```docker build -t dj-cuda-sample1:local -f .\bouncing-balls\docker\Dockerfile .```
+```docker build -t dj-cuda-sample1:local -f .\samples\bouncing_balls\docker\Dockerfile .```
 
 ```docker run --gpus all --runtime=nvidia dj-cuda-sample1:local```
 
