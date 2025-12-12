@@ -31,8 +31,8 @@ First install dependencies, as per below instructions.
 Then to build on Windows, configure and run ```.\build.bat``` build helper, or:
 
 ```
-cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=c:/your-vcpkg-folder/scripts/buildsystems/vcpkg.cmake
-cmake --build build
+cmake -S . -B build-windows -DCMAKE_TOOLCHAIN_FILE=c:/your-vcpkg-folder/scripts/buildsystems/vcpkg.cmake
+cmake --build build-windows
 ```
 
 To build on Linux, either run ```./build.sh```, or:
@@ -45,13 +45,15 @@ cmake --build build-linux
 ## Run (Windows)
 
 ```
-.\build\bouncing-balls\Debug\djbouncing_balls_demo.exe
+.\build-windows\samples\bouncing_balls\Debug\djbouncing_balls_demo.exe
+
+.\build-windows\samples\bouncing_balls\Release\djbouncing_balls_demo.exe
 ```
 
 ## Run (Linux)
 
 ```
-./build-linux/bouncing-balls/djbouncing_balls_demo
+./build-linux/samples/bouncing_balls/djbouncing_balls_demo
 ```
 
 ## Help

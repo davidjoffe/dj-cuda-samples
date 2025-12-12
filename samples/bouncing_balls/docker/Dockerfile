@@ -24,7 +24,7 @@ WORKDIR /app
 COPY CMakeLists.txt ./
 COPY external/ ./external/
 COPY src/ ./src/
-COPY bouncing-balls/ ./bouncing-balls/
+COPY samples/ ./samples/
 
 # Build
 RUN cmake -S . -B build-docker -DCMAKE_BUILD_TYPE=Release && \
@@ -45,6 +45,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy ONLY the final binary to keep the image small
-COPY --from=builder /app/build-docker/bouncing-balls/djbouncing_balls_demo /usr/local/bin/
+COPY --from=builder /app/build-docker/samples/bouncing_balls/djbouncing_balls_demo /usr/local/bin/
 
 CMD ["djbouncing_balls_demo"]
