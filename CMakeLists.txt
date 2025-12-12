@@ -62,4 +62,5 @@ set_target_properties(djcuda_core PROPERTIES
 # ================================================================
 # Subsamples
 # ================================================================
+add_subdirectory(samples/template_minimal)
 add_subdirectory(samples/bouncing_balls)
