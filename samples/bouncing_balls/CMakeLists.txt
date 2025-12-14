@@ -4,13 +4,13 @@
 project(djbouncing_balls VERSION 1.0.0 LANGUAGES C CXX CUDA)
 add_compile_definitions(DJAPP_VERSION="${PROJECT_VERSION}")
 
-add_executable(djbouncing_balls_demo
+add_executable(djbouncing_balls
     demo.cpp
     visuals_gl.cpp
     kernels.cu
 )
 
-target_link_libraries(djbouncing_balls_demo PRIVATE djcuda_core)
+target_link_libraries(djbouncing_balls PRIVATE djcuda_core)
 
 
 # Link core shared code
@@ -20,7 +20,7 @@ target_link_libraries(djbouncing_balls_demo PRIVATE djcuda_core)
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 
-target_link_libraries(djbouncing_balls_demo PRIVATE
+target_link_libraries(djbouncing_balls PRIVATE
     glad
     glfw
     OpenGL::GL
