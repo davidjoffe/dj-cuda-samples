@@ -32,20 +32,6 @@ float dt,
     // but leaving it here for nows
     // can comment out later if too verbose or add options like "-vv" etc. (low priority for small sample/demo)
     //std::cout << "dj:Run GPU update<<<" << blocks << " blocks of " << threadsPerBlock << " threads>>>" << std::endl;
-    /*
-    compute_forces_lj_coulomb<<<grid, threadsPerBlock>>>(N,
-        pos,   // (x,y,z,q)
-        force, // (fx,fy,fz,_)
-        epsilon,
-        sigma,
-        k_electric,
-        cutoff2);
-
-    verlet_step2<<<blocks, threadsPerBlock>>>(N,
-        vel,
-        force,
-        inv_mass,
-        dt);*/
 
     verlet_step1<<<grid, block>>>(N, pos, vel, force, inv_mass, dt);
 

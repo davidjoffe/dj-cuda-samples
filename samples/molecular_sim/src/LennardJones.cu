@@ -1,3 +1,7 @@
+// dj-cuda-samples — https://github.com/davidjoffe/dj-cuda-samples
+// (c) David Joffe / DJ Software - Business Source License (BSL 1.1). See LICENSE
+
+#include "LennardJones.h"
 
 __global__
 void compute_forces_lj_coulomb(

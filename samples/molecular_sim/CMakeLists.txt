@@ -5,10 +5,16 @@
 project(djmolecular_sim VERSION 0.1.0 LANGUAGES C CXX CUDA)
 add_compile_definitions(DJAPP_VERSION_molecular_sim="${PROJECT_VERSION}")
 
-add_executable(djmolecular_sim
-    src/main.cpp
-    src/md_simulation.cu
+file(GLOB_RECURSE CORE_SRC
+    CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cu
 )
+
+add_executable(djmolecular_sim
+    ${CORE_SRC}
+)
+
 
 target_link_libraries(djmolecular_sim PRIVATE djcuda_core)
 

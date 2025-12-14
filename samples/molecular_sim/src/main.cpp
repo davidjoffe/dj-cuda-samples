@@ -24,6 +24,12 @@ Regarding the idea of headless mode, there are two types of situations to consid
 In such case, we maybe don't want to sleep, and though we may still want to use some sort of constant delta time for the physics e.g. say 120Hz or 100Hz or 60Hz or whatever we need for simulation fidelity, we call the GPU kernel update as fast as possible with this fixed time-step, so we have a 'virtual' delta tmie and a real delta time which may be either faster or slower depending how fast the hardware is.
 */
 
+// our headers
+#include "particles.h"
+#include "renderer.h"
+#include "camera.h"
+#include "stats.h"
+
 #include <iostream>
 #include <cuda_runtime.h>
 #include <glad/glad.h>
@@ -162,25 +168,6 @@ void djDoUpdate(void* d_data, float dt, int N)
 
 }
 
-
-struct Stats
-{
-    // Sum of total dt (delta time) over all frames (total time elapsed for update/draw loop over application runtime)
-    float frameTimeTotal = 0.0f;
-    // Total 'virtual simulation time' passed
-    float virtualTimeTotal = 0.0f;
-    // Total actual human time passed (including things like paused time)
-    float runtimeTotal = 0.0f;
-    // Updates performed
-    int updateCount = 0;
-    int updateCountAccum = 0;
-    // Frames drawn
-    int frameCount = 0;
-
-    // Average Frames Per Second over runtime
-    float averageFPS = 0.0f;
-    float averageUpdatesPerSecond = 0.0f;
-};
 
 // Stats like number of frames drawn, total time, updates called etc.
 Stats g_stats;
