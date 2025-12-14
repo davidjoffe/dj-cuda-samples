@@ -43,7 +43,6 @@ In such case, we maybe don't want to sleep, and though we may still want to use 
 //#include <math.h>// init
 
 void djVisualsInit() {}
-void djVisualsDraw(float *h_x, float *h_y, void *p, void* q,  int N) {}
 
 float4*  pos=nullptr;   // (x,y,z,q)
 float4*  force=nullptr; // (fx,fy,fz,_)
@@ -66,6 +65,14 @@ struct Particles
         float4* h_pos = nullptr;
         float4* h_vel = nullptr;
         //float* h_force= nullptr;
+
+void djVisualsDraw(int N)
+{
+    for (int i=0; i<N; ++i)
+    {
+        
+    }
+}
 
 void init_cubic_lattice(
     int N,
@@ -103,7 +110,7 @@ void init_cubic_lattice(
 
 }
 
-void djInit(int N)
+void djInitData(int N)
 {
     std::cout << "dj: Initialize molecular simulation data: number of molecules " << N << std::endl;
     // Already initialized?
@@ -137,8 +144,9 @@ void djDoUpdate(void* d_data, float dt, int N)
 {
     if (pos==nullptr)
     {
+        return;//sanity check
         // once-off initialize
-        djInit(N);
+        //djInit(N);
     }
 
 
@@ -391,7 +399,7 @@ int main(int argc, char** argv) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create window
-    std::cout << "Creating window..." << std::endl;
+    std::cout << "dj: Creating GL window..." << std::endl;
     std::string title = "Molecular Sim --- DJ CUDA Samples";
     title = title + " - ";
     title = title + std::to_string(N) + " particles"; // not quite sure about word 'particles' ... these may be more than just particles ...
@@ -420,32 +428,9 @@ int main(int argc, char** argv) {
     glfwSwapInterval(1);
     }
 
-
-    std::cout << "Initializing demo data..." << std::endl;
-
-    // GPU VRAM top-level data instance of array of structs
-    // NB this must live in GPU memory also if we pass it to the kernel update as a pointer, which we do
-    // (Otherwise it would be a memory address in CPU space, which GPU can't dereference, even though the struct's members are in GPU)
-    SoA_Data* d_balls = nullptr;
-    std::cout << "dj:Allocating SoA_Data in GPU VRAM." << std::endl;
-    cudaMalloc(&d_balls, sizeof(SoA_Data));
-
-    // Temporary CPU instance to init data before copying to GPU
-    SoA_Data h_balls;
-
-    // Initialize start positions, radius data etc.
-    // Init on CPU then copy initial state to GPU mem to start
-    h_balls.init(N);
-    // Do shallow copy of struct to GPU.
-    // NB we can't just do "*d_balls = h_balls;" as we are used to doing in C/C++!
-    // as that would mean dereferencig a GPU pointer here from CPU code, which causes a crash.
-    // We must use cudaMemcpy to copy, with cudaMemcpyHostToDevice
-    // *** Don't do: *d_balls = h_balls;
-    // This final memcpy, while intuitively we might guess it copies a lot (all the ball data) in fact it copies only a tiny amount of data,
-    // just the device GPU pointers to the arrays like 'float* x' etc. and a few other basics like the count.
-    // The arrays are already in GPU memory.
-    cudaMemcpy(d_balls, &h_balls, sizeof(SoA_Data),
-        cudaMemcpyHostToDevice);
+    std::cout << "Initializing molecular sim data" << std::endl;
+    std::cout << "dj: Initializing data..." << std::endl;
+    djInitData(N);
 
     // Initialize visualization(s)
     if (haveGL && !headless)
@@ -456,6 +441,7 @@ int main(int argc, char** argv) {
     float* h_y = new float[N];
     memset(h_x, 0, N*sizeof(float));
     memset(h_y, 0, N*sizeof(float));
+    void* d_data = nullptr;//stub for now
 
     // (2) Main loop
 
@@ -491,7 +477,7 @@ int main(int argc, char** argv) {
             //verbose//std::cout << dt << std::endl;
 
             // Use a delta-time accumulation here to make it more deterministic not frame-rate dependent or update-rate dependent
-            // This helps prevent determinism issues such as cross-platform differences in bouncing ball behaviour stemming from e.g. differences in how GL VSYNC is handled for drawing etc.
+            // This helps prevent determinism issues such as cross-platform differences in behaviour stemming from e.g. differences in how GL VSYNC is handled for drawing etc.
             // We ideally want the simulation update to be as stable and deterministic as possible, so we run updates at a fixed rate internally regardless of rendering frame rate
             // This is at a slight performance impact but if we want stability/determinism it's worth it.
             // If you don't care about that, and more interested in fastest performance, you can just call djDoUpdate(d_balls, dt, N); directly instead and get a pip faster performance
@@ -508,14 +494,13 @@ int main(int argc, char** argv) {
                 //verbose//std::cout << "UPDATE" << std::endl;
                 //while (accumDt >= stablerate) // update at fixed time intervals for more stable behavior
                 {
-                    djDoUpdate(d_balls, stablerate, N);
+                    djDoUpdate(d_data, stablerate, N);
                     //verbose//std::cout << "DONE" << std::endl;
                     //cudaDeviceSynchronize();// <- without these WSL may run forever, but we don't want to add it to windowed mode path as that would slow it down unnecessarily
                     //verbose//std::cout << "SYNCED" << std::endl;
                     ++g_stats.updateCountAccum;
                     //accumDt -= stablerate;
                 }
-                //djDoUpdate(d_balls, dt, N);//0.016f);
 
                 // Copy positions etc. from GPU to CPU for visualization
                 //cudaMemcpy(h_x, h_balls.x, N*sizeof(float), cudaMemcpyDeviceToHost);
@@ -577,7 +562,7 @@ int main(int argc, char** argv) {
             // IMPORTANT If not using a limited stable rate then we go back to the usual way of passing delta-time once per frame
             if (rate < 0.f)
             {
-                djDoUpdate(d_balls, dt, N);
+                djDoUpdate(d_data, dt, N);
                 ++g_stats.updateCount; // STATS
             }
             else
@@ -596,7 +581,7 @@ int main(int argc, char** argv) {
                 {
                     while (accumDt >= stablerate) // update at fixed time intervals for more stable behavior
                     {
-                        djDoUpdate(d_balls, stablerate, N);
+                        djDoUpdate(d_data, stablerate, N);
                         ++g_stats.updateCountAccum;
                         accumDt -= stablerate;
                     }
@@ -607,8 +592,8 @@ int main(int argc, char** argv) {
         }
 
         // Copy positions etc. from GPU to CPU for visualization
-        cudaMemcpy(h_x, h_balls.x, N*sizeof(float), cudaMemcpyDeviceToHost);
-        cudaMemcpy(h_y, h_balls.y, N*sizeof(float), cudaMemcpyDeviceToHost);
+        //cudaMemCpy(h_pos, pos, N*sizeof(float4), cudaMemcpyDeviceToHost);
+        //cudaMemCpy(h_vel, vel, N*sizeof(float4), cudaMemcpyDeviceToHost);
 
         // Clear
         glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
@@ -617,7 +602,7 @@ int main(int argc, char** argv) {
         // Draw here
         // Temporarily keep old drawing code commented out for now for testing ... to make sure new one is correct
         //djVisualsDrawOld(h_x, h_y, nullptr, nullptr, N);
-    djVisualsDraw(h_x, h_y, nullptr, nullptr, N);
+    djVisualsDraw(N);
 
         glfwSwapBuffers(window);
 
@@ -659,9 +644,10 @@ int main(int argc, char** argv) {
     // If we are not careful it's easy to end up with double-delete mistake in situations like this ...
     // d_balls pointers will dangle the moment after doing this, and we don't and should not also "cleanup()" on d_balls
     // but we do need to cudaFree d_balls instance itself.
-    h_balls.cleanup();
-    if (d_balls!=nullptr) cudaFree(d_balls);
-    d_balls = nullptr;//<- sanity safety measure to help avoid dangling pointers (even though we're about to exit this is a good habit that can prevent bugs in some cases)
+    //h_balls.cleanup();
+    //if (d_balls!=nullptr) cudaFree(d_balls);
+    //d_balls = nullptr;//<- sanity safety measure to help avoid dangling pointers (even though we're about to exit this is a good habit that can prevent bugs in some cases)
+    d_data = nullptr;
 
     if (haveGL && !headless) {
         glfwDestroyWindow(window);
@@ -703,11 +689,13 @@ int main(int argc, char** argv) {
 
 
     // Set to null even though we're 'about to exit' is a good habit just in case someone later tries to add code below dereferencing these pointers
-    delete[] h_x;
+    if (h_x!=nullptr)
+        delete[] h_x;
     h_x = nullptr;
-    delete[] h_y;
+    if (h_y!=nullptr)
+        delete[] h_y;
     h_y = nullptr;
 
-    std::cout << "Exiting demo." << std::endl;
+    std::cout << "Exiting djmolecular_sim." << std::endl;
     return 0;
 }
