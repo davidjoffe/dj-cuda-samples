@@ -84,12 +84,18 @@ endif()
 # Subsamples (platform independent ones)
 # ================================================================
 add_subdirectory(samples/template_minimal)
+add_subdirectory(samples/galaxy_explorer)
+#add_subdirectory(samples/template_gl)
+#add_subdirectory(samples/template_imgui)
 
 # ================================================================
 # CUDA samples (only if CUDA compiler exists)
 # ================================================================
 if (CMAKE_CUDA_COMPILER)
     add_subdirectory(samples/bouncing_balls)
+    add_subdirectory(samples/molecular_sim)
+    #add_subdirectory(samples/template_cuda)
+    #add_subdirectory(samples/template_cuda_gl)
 else()
     message(STATUS "dj-cmake: Skipping CUDA projects (CUDA unavailable)")
 endif()
