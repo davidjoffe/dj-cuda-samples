@@ -23,8 +23,6 @@ void compute_forces_lj_coulomb(
 
     float3 fi  = make_float3(0.0f, 0.0f, 0.0f);
 
-    float sig2 = sigma * sigma;
-    float sig6 = sig2 * sig2 * sig2;
 
     for (int j = 0; j < N; ++j)
     {
@@ -41,24 +39,20 @@ void compute_forces_lj_coulomb(
 
         float r2 = rij.x * rij.x + rij.y * rij.y + rij.z * rij.z;
         if (r2 > cutoff2 || r2 == 0.0f) continue;
+        // debug safety: prevent singularity .. for stability
+        r2 = fmaxf(r2, 0.8f * 0.8f);
 
         // inverse powers
-        float inv_r2  = 1.0f / r2;
-        float inv_r   = rsqrtf(r2);           // 1/r
-        float inv_r6  = inv_r2 * inv_r2 * inv_r2;
+        float inv_r2 = 1.0f / r2;
+        float sr2    = (sigma * sigma) * inv_r2;
+        float sr6    = sr2 * sr2 * sr2;
+        float sr12   = sr6 * sr6;
 
-        // Lennard-Jones: F_LJ = 24 ε [2 (σ^12 / r^13) − (σ^6 / r^7)] r̂
-        float sig12 = sig6 * sig6;
-        float lj_scalar = 24.0f * epsilon * inv_r2 * inv_r6 * (2.0f * sig12 * inv_r6 - sig6);
+        float f_over_r = 24.0f * epsilon * inv_r2 * (2.0f * sr12 - sr6);
 
-        // Coulomb: F_C = k q_i q_j / r^2 * r̂
-        float coulomb_scalar = k_electric * qi * qj * inv_r2;
-
-        float scalar = lj_scalar + coulomb_scalar;
-
-        fi.x += scalar * rij.x;
-        fi.y += scalar * rij.y;
-        fi.z += scalar * rij.z;
+        fi.x += f_over_r * rij.x;
+        fi.y += f_over_r * rij.y;
+        fi.z += f_over_r * rij.z;
     }
 
     force[i] = make_float4(fi.x, fi.y, fi.z, 0.0f);

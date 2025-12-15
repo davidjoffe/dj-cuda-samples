@@ -150,14 +150,17 @@ void djVisualsDraw(float4* h_pos, float *h_x, float* h_y, float* h_z, float* rad
 //    else
 
 glPointSize(3.0f);
+glPointSize(0.8f);
 //glPointSize(1.0f);
+
+//fddsf
 
     // LOOP THROUGH MOLECULES' POSITIONS AND DRAW
     for ( int i = 0; i < N; ++i ) {
 //        g_GL.vertexarray[i*2 + 0] = h_x[i] + drawoffsetX;
-  //      g_GL.vertexarray[i*2 + 1] = h_y[i] + drawoffsetY;
-        g_GL.vertexarray[i*2 + 0] = h_pos[i].x * 0.002f + drawoffsetX;
-        g_GL.vertexarray[i*2 + 1] = h_pos[i].y * 0.002f + drawoffsetY;
+    //      g_GL.vertexarray[i*2 + 1] = h_y[i] + drawoffsetY;
+        g_GL.vertexarray[i*2 + 0] = h_pos[i].x * 0.01f + drawoffsetX;
+        g_GL.vertexarray[i*2 + 1] = h_pos[i].y * 0.01f + drawoffsetY;
         //g_GL.vert
     }
     glBindBuffer(GL_ARRAY_BUFFER, g_GL.vbo);

@@ -48,8 +48,6 @@ void verlet_step2(
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= N) return;
 
-//    float3 v = make_float3(vel[i]);
-//    float3 f = make_float3(force[i]);
     float3 v = make_float3(vel[i].x,   vel[i].y,   vel[i].z);
     float3 f = make_float3(force[i].x, force[i].y, force[i].z);
 
@@ -59,5 +57,11 @@ void verlet_step2(
     v.z += 0.5f * dt * inv_mass * f.z;
 
     vel[i] = make_float4(v.x, v.y, v.z, 0.0f);
+
+    // For stability contain/damp velocity ... to help prevent shooting apart etc.
+    float gamma = 0.01f;   // friction
+    vel[i].x *= (1.0f - gamma * dt);
+    vel[i].y *= (1.0f - gamma * dt);
+    vel[i].z *= (1.0f - gamma * dt);
 }
 

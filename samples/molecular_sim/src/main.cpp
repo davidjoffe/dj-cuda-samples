@@ -31,6 +31,7 @@ In such case, we maybe don't want to sleep, and though we may still want to use 
 #include "renderer.h"
 #include "camera.h"
 #include "stats.h"
+#include "md_simulation.h"
 
 #include <iostream>
 #include <cuda_runtime.h>
@@ -59,17 +60,6 @@ float inv_mass  = 1.0f;      // mass = 1 (reduced units)
         float4* h_pos = nullptr;
         float4* h_vel = nullptr;
         //float* h_force= nullptr;
-/*
-// 
-// conceptual design layers: 'molecular-specific' -> 'visuals' -> more generic 'renderer'
-void djVisualsDraw(int N)
-{
-    for (int i=0; i<N; ++i)
-    {
-        
-    }
-}
-*/
 void init_cubic_lattice(
     int N,
     float4* h_pos,
@@ -114,7 +104,7 @@ void djInitData(int N)
 
     //if (h)
     // init
-    float       spacing     = 1.1f * sigma;
+    float       spacing     = 1.122f * sigma;
     float       temperature =       0.1f;
     //dt          = 0.002f;
     //cutoff      = 2.5f * sigma;
@@ -123,6 +113,27 @@ void djInitData(int N)
     h_vel = new float4[N];
 
     init_cubic_lattice(N, h_pos, h_vel, 1.1f * sigma, temperature);
+
+
+    // Remove center-of-mass velocity (toward stability)
+    // below to help fix 'slow drifting blob' and for more liquid-like stability, symmetric evaporation
+    float3 v_cm = make_float3(0, 0, 0);
+    for (int i = 0; i < N; ++i) {
+        v_cm.x += h_vel[i].x;
+        v_cm.y += h_vel[i].y;
+        v_cm.z += h_vel[i].z;
+    }
+    v_cm.x /= N;
+    v_cm.y /= N;
+    v_cm.z /= N;
+    for (int i = 0; i < N; ++i) {
+        h_vel[i].x -= v_cm.x;
+        h_vel[i].y -= v_cm.y;
+        h_vel[i].z -= v_cm.z;
+    }
+
+    
+
     // CPU => GPU: COPY DATA TO GPU
     int nARRSIZE = sizeof(float4)*N;
     cudaMalloc(&pos, nARRSIZE);
@@ -147,19 +158,7 @@ void djDoUpdate(void* d_data, float dt, int N)
     }
 
 
-    extern void djDoUpdate(int    N,
-        float4* __restrict__ pos,   // (x,y,z,q)
-        float4*       __restrict__ force, // (fx,fy,fz,_)
-        float epsilon,
-        float sigma,
-        float k_electric,
-        float cutoff2,
-        float dt,
-        float4* __restrict__ vel,
-        float inv_mass
-    );
-    
-    djDoUpdate(N,
+    djCUDA_GPU_Update(N,
         pos,   // (x,y,z,q)
         force, // (fx,fy,fz,_)
         epsilon,
@@ -398,7 +397,7 @@ int main(int argc, char** argv) {
 
     // Create window
     std::cout << "dj: Creating GL window..." << std::endl;
-    std::string title = "Molecular Sim --- DJ CUDA Samples";
+    std::string title = "Molecular Sim --- DJ CUDA Samples --- DJoffe.com";
     title = title + " - ";
     title = title + std::to_string(N) + " particles"; // not quite sure about word 'particles' ... these may be more than just particles ...
     window = glfwCreateWindow(w, h, title.c_str(), fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
@@ -430,6 +429,16 @@ int main(int argc, char** argv) {
     std::cout << "dj: Initializing data..." << std::endl;
     djInitData(N);
 
+    // We must run a 'special' first step update to calculate init forces to make the verlet integration work right in the loop
+    djCUDA_GPU_InitStep(N,
+        pos,
+        force,
+        epsilon,
+        sigma,
+        k_electric,
+        cutoff2
+    );
+
     // Initialize visualization(s)
     if (haveGL && !headless)
     {
@@ -451,36 +460,43 @@ int main(int argc, char** argv) {
 
 
 
+    bool debug = true;
+    if (debug && haveGL && !headless)
+    {
+        // DEBUG STEP! To make sure things are right:
+        // (1) Draw so we can see state looks correct in initial data
+        // (2) Then copy GPU data to CPU
+        // (3) Draw again to make sure state looks correct from the GPU side too
 
         // DRAW start-state first - for user and to help debug and make sure
         // Clear
-        glClearColor(0.1f, 0.1f, 0.55f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.45f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N);
         glfwSwapBuffers(window);
-// Wait a few seconds
-std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-// Clear
-glClearColor(0.1f, 0.1f, 0.55f, 1.0f);
-glClear(GL_COLOR_BUFFER_BIT);
-glfwSwapBuffers(window);
-std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        // Wait a few seconds
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        // Clear
+        glClearColor(0.1f, 0.1f, 0.45f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glfwSwapBuffers(window);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-//paused = true;
-// draw again but test GPU to C Ucopy!
-cudaMemcpy(h_pos, pos, N*sizeof(float4), cudaMemcpyDeviceToHost);
+        // GPU => CPU COPY then draw again to test GPU to C Ucopy!
+        cudaMemcpy(h_pos, pos, N*sizeof(float4), cudaMemcpyDeviceToHost);
 
-// Clear
-glClearColor(0.1f, 0.1f, 0.35f, 1.0f);
-glClear(GL_COLOR_BUFFER_BIT);
-djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N);
-glfwSwapBuffers(window);
-std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-// Clear
-glClearColor(0.1f, 0.1f, 0.35f, 1.0f);
-glClear(GL_COLOR_BUFFER_BIT);
-glfwSwapBuffers(window);
-std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        // Clear
+        glClearColor(0.1f, 0.1f, 0.4f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N);
+        glfwSwapBuffers(window);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        // Clear
+        glClearColor(0.1f, 0.1f, 0.4f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glfwSwapBuffers(window);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
 
     // (2) Main loop
 
