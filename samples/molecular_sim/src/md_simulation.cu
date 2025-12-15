@@ -5,6 +5,7 @@
 
 #include "VelocityVerlet.h"
 #include "LennardJones.h"
+#include "stats.h"
 
 void djDoUpdate(int    N,
      float4* __restrict__ pos,   // (x,y,z,q)
@@ -43,4 +44,6 @@ float dt,
     );
 
     verlet_step2<<<grid, block>>>(N, vel, force, inv_mass, dt);
+
+    ++g_stats.GPUupdates;
 }

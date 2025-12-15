@@ -2,7 +2,7 @@
 # (c) David Joffe / DJ Software — Business Source License (BSL 1.1). See LICENSE
 
 # Need C for glad GL loader ...
-project(djmolecular_sim VERSION 0.1.0 LANGUAGES C CXX CUDA)
+project(djmolecular_sim VERSION 0.2.0 LANGUAGES C CXX CUDA)
 add_compile_definitions(DJAPP_VERSION_molecular_sim="${PROJECT_VERSION}")
 
 file(GLOB_RECURSE CORE_SRC

@@ -20,4 +20,11 @@ struct Stats
     // Average Frames Per Second over runtime
     float averageFPS = 0.0f;
     float averageUpdatesPerSecond = 0.0f;
+
+    // This may be redundant, check and clean up later and consolidate if so, but for now it helps us test and be sure the main update call is occurring and how many times
+    // Note if we also had a Metal backend then 'CUDAupdates' and 'GPUupdates' would be separate different things - should we just have one 'GPU updates' or both? 
+    int GPUupdates = 0;
 };
+
+extern Stats g_stats;
+

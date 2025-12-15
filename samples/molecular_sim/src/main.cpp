@@ -3,6 +3,8 @@
 // OpenGL Template
 // main.cpp
 
+// conceptual design layers: 'molecular-specific' -> 'visuals' -> more generic 'renderer'
+
             // TODO main thread sleeping is a bit wrong but VSYNC gonna cause same problem!?
 
 // dj CUDA sample
@@ -42,8 +44,6 @@ In such case, we maybe don't want to sleep, and though we may still want to use 
     #include <cmath>
 //#include <math.h>// init
 
-void djVisualsInit() {}
-
 float4*  pos=nullptr;   // (x,y,z,q)
 float4*  force=nullptr; // (fx,fy,fz,_)
 float4*  vel=nullptr;// verlet
@@ -55,17 +55,13 @@ float cutoff    = 2.5f*sigma;
 float cutoff2   = cutoff*cutoff;
 float inv_mass  = 1.0f;      // mass = 1 (reduced units)
 
-struct Particles
-{
-    float4* pos;   // (x, y, z, q)
-    float4* vel;   // (vx, vy, vz, _)
-    float4* force; // (fx, fy, fz, _)
-};
         // do these live only during init or are they useful later eg for GPU -> CPU visualization or saving data?
         float4* h_pos = nullptr;
         float4* h_vel = nullptr;
         //float* h_force= nullptr;
-
+/*
+// 
+// conceptual design layers: 'molecular-specific' -> 'visuals' -> more generic 'renderer'
 void djVisualsDraw(int N)
 {
     for (int i=0; i<N; ++i)
@@ -73,7 +69,7 @@ void djVisualsDraw(int N)
         
     }
 }
-
+*/
 void init_cubic_lattice(
     int N,
     float4* h_pos,
@@ -99,9 +95,9 @@ void init_cubic_lattice(
 
         // Maxwell-Boltzmann-ish random velocities
         h_vel[idx] = make_float4(
-            temperature * (rand() / (float)RAND_MAX - 0.5f),
-            temperature * (rand() / (float)RAND_MAX - 0.5f),
-            temperature * (rand() / (float)RAND_MAX - 0.5f),
+            temperature * ((float)rand() / (float)RAND_MAX - 0.5f),
+            temperature * ((float)rand() / (float)RAND_MAX - 0.5f),
+            temperature * ((float)rand() / (float)RAND_MAX - 0.5f),
             0.0f
         );
 
@@ -119,15 +115,16 @@ void djInitData(int N)
     //if (h)
     // init
     float       spacing     = 1.1f * sigma;
-    float       temperature = 0.1f;
+    float       temperature =       0.1f;
     //dt          = 0.002f;
-    cutoff      = 2.5f * sigma;
+    //cutoff      = 2.5f * sigma;
 
     h_pos = new float4[N];
     h_vel = new float4[N];
 
-    init_cubic_lattice(N, h_pos, h_vel, 1.1f * sigma, 0.1f);
-    int nARRSIZE = sizeof(float)*N;
+    init_cubic_lattice(N, h_pos, h_vel, 1.1f * sigma, temperature);
+    // CPU => GPU: COPY DATA TO GPU
+    int nARRSIZE = sizeof(float4)*N;
     cudaMalloc(&pos, nARRSIZE);
     cudaMemset(pos,0,nARRSIZE);
     cudaMemcpy(pos, h_pos, nARRSIZE, cudaMemcpyHostToDevice);
@@ -174,6 +171,7 @@ void djDoUpdate(void* d_data, float dt, int N)
         inv_mass
     );
 
+    //cudaMemCpy(h_pos, pos, N*sizeof(float4), cudaMemcpyDeviceToHost);
 }
 
 
@@ -305,9 +303,9 @@ int main(int argc, char** argv) {
     int maxframes = -1; // -1 = unlimited
     float rate = (1.0f / 0.002f);//-1.f;//120.0f; // target 'stable' simulation physics update rate in Hz (or -1 for no fixed rate, frame rate dependent, less deterministic)
 
-    std::cout << "djmolecular_sim Molecular Sim v0.1.0 running" << std::endl;
+    std::cout << "djmolecular_sim Molecular Sim v0.2.0 demo running" << std::endl;
     std::cout << "===========================================" << std::endl;
-    std::cout << "dj CUDA sample" << std::endl;
+    std::cout << "Molecular Sim - CUDA GPU-accelerated molecular simulation" << std::endl;
     std::cout << "Version " << DJAPP_VERSION_molecular_sim << std::endl;
     std::cout << "Keys:" << std::endl;
     std::cout << "    P     Pause/Unpause" << std::endl;
@@ -434,7 +432,15 @@ int main(int argc, char** argv) {
 
     // Initialize visualization(s)
     if (haveGL && !headless)
+    {
+        // Conceptually this could either be just renderer for a simple app or demo
+        // or for more complex we could conceptally think of layers - the underlying more generic renderer,
+        // with say molecular-sim specific stuff visuals built code on top of that using the renderer.
+        // The renderer should in principle not know about molecules just triangles, shaders, points, etc.
+    // djRendererInit();
         djVisualsInit();
+        djVisualsInitOnceoff(N);
+    }
 
     // Copy positions etc. to CPU for visualization
     float* h_x = new float[N];
@@ -442,6 +448,39 @@ int main(int argc, char** argv) {
     memset(h_x, 0, N*sizeof(float));
     memset(h_y, 0, N*sizeof(float));
     void* d_data = nullptr;//stub for now
+
+
+
+
+        // DRAW start-state first - for user and to help debug and make sure
+        // Clear
+        glClearColor(0.1f, 0.1f, 0.55f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N);
+        glfwSwapBuffers(window);
+// Wait a few seconds
+std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+// Clear
+glClearColor(0.1f, 0.1f, 0.55f, 1.0f);
+glClear(GL_COLOR_BUFFER_BIT);
+glfwSwapBuffers(window);
+std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+//paused = true;
+// draw again but test GPU to C Ucopy!
+cudaMemcpy(h_pos, pos, N*sizeof(float4), cudaMemcpyDeviceToHost);
+
+// Clear
+glClearColor(0.1f, 0.1f, 0.35f, 1.0f);
+glClear(GL_COLOR_BUFFER_BIT);
+djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N);
+glfwSwapBuffers(window);
+std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+// Clear
+glClearColor(0.1f, 0.1f, 0.35f, 1.0f);
+glClear(GL_COLOR_BUFFER_BIT);
+glfwSwapBuffers(window);
+std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     // (2) Main loop
 
@@ -559,6 +598,41 @@ int main(int argc, char** argv) {
         // Run GPU kernel parallel update function
         if (!paused)
         {
+            // Let's say we target 30fps
+            const float TARGET_FRAMERATE_seconds = (1.0f / 30.0f);
+            // then 'while dt < (1/30)'
+            //    do-updates(at stable-rate)
+// THIS IS GOING TO MAYBE HAMMER CPU .. since vsync is 60hz
+// it basically means 'try use full CPU to update molecules as fast as possible
+// while still visualizing at a human-watchable rate'
+// probably 'ok for now' but in future may want to tweak all this or add more command
+// line options to control these things like if the user wants to sleep or the user target fps
+// 'While human-time-passed less than 1/30th of a second do-sim-update at fixed rate as fast as possible
+// Why 30? This is not a game where we want it smooth as possible
+// It's molecular sim with visualization ... we want the sim to run as fast as possible
+// not waste too much resources on rendering smoothly
+// but should stlil look 'smooth' to humans whlie not wasting GPU time on rendering too much
+// 30Hz still looks smooth enough to visualize molecular sims
+// Still there should be a --target-fps or --fps command line option
+// VSYNC is capping us to 60 anyway normally
+            auto nowstart = now;
+            float dtnow = 0.0f;//<-time spent updating this frame
+//            while (dtnow < TARGET_FRAMERATE_seconds)
+            {
+                // maybe not obvious but we don't pass real human dt to update here, we pass the 'sim rate' of say 500hz of whatever:
+                djDoUpdate(d_data, stablerate, N);
+                ++g_stats.updateCountAccum;
+                ++g_stats.updateCount; // STATS
+                g_stats.virtualTimeTotal += stablerate;
+
+                std::cout<<".";
+                auto now1 = std::chrono::high_resolution_clock::now();
+                dtnow = std::chrono::duration<float>(now1 - nowstart).count();
+            }
+            std::cout << dtnow << " " << stablerate << " " << g_stats.virtualTimeTotal << " " << g_stats.GPUupdates << std::endl;
+
+
+            /*
             // IMPORTANT If not using a limited stable rate then we go back to the usual way of passing delta-time once per frame
             if (rate < 0.f)
             {
@@ -589,11 +663,13 @@ int main(int argc, char** argv) {
                     ++g_stats.updateCount;
                 }
             }
+            */
         }
 
+        // we maybe want to do things like have velocity be used for color so moving thus energetic particles look 'hotter' and brighter
         // Copy positions etc. from GPU to CPU for visualization
-        //cudaMemCpy(h_pos, pos, N*sizeof(float4), cudaMemcpyDeviceToHost);
-        //cudaMemCpy(h_vel, vel, N*sizeof(float4), cudaMemcpyDeviceToHost);
+        cudaMemcpy(h_pos, pos, N*sizeof(float4), cudaMemcpyDeviceToHost);
+        //cudaMemcpy(h_vel, vel, N*sizeof(float4), cudaMemcpyDeviceToHost);
 
         // Clear
         glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
@@ -602,24 +678,30 @@ int main(int argc, char** argv) {
         // Draw here
         // Temporarily keep old drawing code commented out for now for testing ... to make sure new one is correct
         //djVisualsDrawOld(h_x, h_y, nullptr, nullptr, N);
-    djVisualsDraw(N);
+        // todo most of these params are not used come from other sample
+        djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N);
+
 
         glfwSwapBuffers(window);
 
+// NB this may sound counter-intuitive but for the molecular sim we may want to not prevent CPU hogging as much
+// See comments elsewhere by TARGET_FRAMERATE
         // Prevent CPU hogging (slightly fudgy/simplistic) with a sleep of 1 millisecond.
         // This helps avoid pegging the CPU at 100% usage in this simple demo app, which can use too much power and make it run hot, since we don't need a thousand frames per second for a simple sample ...
         //
         // NB this is very carefully and deliberately placed after the 'swap' but before 'poll events',
         // since if (say) the user presses a key during sleep, we want to process the user's input as quickly as possible before drawing the next frame (if this were a game) for fastest possible response to user input.
         // If we put the sleep after pollEvents, there would be an unnecessary delay between user input and processing it as it would render an extra frame first and only then process the event.
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+// We don't want to sleep unless we're also in the background updating
+//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         // STATS
         if (!paused)
         {
             ++g_stats.frameCount; // "++foo" may in some cases optimize better than "foo++"
             g_stats.frameTimeTotal += dt;
-            g_stats.virtualTimeTotal += dt;
+          //  g_stats.virtualTimeTotal += dt;
         }
         //stats.fps = 1.0f / dt;
 
@@ -678,13 +760,16 @@ int main(int argc, char** argv) {
     std::cout << "Total updates: " << g_stats.updateCount << std::endl;
     std::cout << "Total updates (accum): " << g_stats.updateCountAccum << std::endl;
     // Log major stats that are 'benchmark-interesting' on single line for more easily working with and checking and reviewing and automating benchmark and test runs:
-    std::cout << "BENCH: ver=" << DJAPP_VERSION_molecular_sim << " rate=" << std::to_string(rate) 
-              << " N=" << N 
+    std::cout << "dj-BENCH: ver=" << DJAPP_VERSION_molecular_sim << " rate=" << std::to_string(rate) 
+              << " N=" << N
+              // Note if we also had a Metal backend then 'CUDAupdates' and 'GPUupdates' would be separate different things - should we just have one 'GPU updates' or both? 
+              << " dj-CUDA-updates=" << g_stats.GPUupdates
               // the names of these are a bit off/misleading in headless mode especially - todo make it a bit clearer later
               << " avgFPS=" << g_stats.averageFPS 
               << " avgUpdatesPerSecond=" << g_stats.averageUpdatesPerSecond 
               << " totalTime=" << g_stats.frameTimeTotal 
               << " totalFrames=" << g_stats.frameCount 
+              << " totalVirtualTime=" << std::to_string(g_stats.virtualTimeTotal)
               << std::endl;
 
 
