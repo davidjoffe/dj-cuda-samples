@@ -15,7 +15,17 @@ A growing collection of small CUDA cross-platform learning samples by David Joff
 * Galaxy Explorer (in development)
 * Templates
 
-Platforms: Windows; Linux/WSL
+Platforms: Windows; Linux/WSL; (macOS in development)
+
+### 🔹 Molecular Simulation
+A GPU-accelerated molecular dynamics sandbox using Lennard-Jones interactions and Velocity Verlet integration, with real-time visualization.
+
+- 100,000 particles in real time
+- CUDA force computation
+- Interactive OpenGL rendering
+- Early-stage but physically motivated behavior (clustering, evaporation, dispersion)
+
+See [`samples/molecular_sim`](samples/molecular_sim) for details.
 
 ## Requirements
 
@@ -48,15 +58,18 @@ cmake --build build-linux
 ## Run (Windows)
 
 ```
-.\build-windows\samples\bouncing_balls\Debug\djbouncing_balls_demo.exe
+.\build-windows\samples\bouncing_balls\Debug\djbouncing_balls.exe
 
-.\build-windows\samples\bouncing_balls\Release\djbouncing_balls_demo.exe
+.\build-windows\samples\bouncing_balls\Release\djbouncing_balls.exe
+
+.\build-windows\samples\molecular_sim\Release\djmolecular_sim.exe
 ```
 
 ## Run (Linux)
 
 ```
-./build-linux/samples/bouncing_balls/djbouncing_balls_demo
+./build-linux/samples/bouncing_balls/djbouncing_balls
+./build-linux/samples/molecular_sim/djmolecular_sim
 ```
 
 ## Help
