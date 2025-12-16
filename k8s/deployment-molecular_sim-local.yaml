@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dj-molecular-sim
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dj-molecular-sim
+  template:
+    metadata:
+      labels:
+        app: dj-molecular-sim
+      annotations:
+        nvidia.com/gpu: "1"
+    spec:
+      containers:
+      - name: dj-molecular-sim
+        image: dj-molecular-sim:local
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+        securityContext:
+          privileged: true
+      restartPolicy: Always
