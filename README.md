@@ -141,7 +141,13 @@ Note that if you have installed the NVIDIA Container Toolkit but still get a war
 
 ```docker build -t dj-cuda-sample1:local -f .\samples\bouncing_balls\docker\Dockerfile .```
 
-```docker run --gpus all --runtime=nvidia dj-cuda-sample1:local```
+```docker buildx build --compress --progress=plain -t dj-molecular-sim:local -f .\samples\molecular_sim\docker\Dockerfile .```
+
+
+```
+docker run --gpus all --runtime=nvidia dj-molecular-sim:local
+docker run --gpus all --runtime=nvidia dj-cuda-sample1:local
+```
 
 ## License
 
