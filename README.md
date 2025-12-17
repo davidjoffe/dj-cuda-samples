@@ -78,6 +78,7 @@ cmake --build build-linux
 
 ```
     P     Pause/Unpause
+    Z,X   Zoom in / Zoom out (molecular sim)
     ESC   Exit
 ```
 
