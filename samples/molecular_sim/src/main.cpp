@@ -149,30 +149,14 @@ void djInitData(int N)
     cudaMemset(force,0,nARRSIZE);
 }
 
-void djDoUpdate(void* d_data, float dt, int N)
-{
-    if (pos==nullptr)
-    {
-        return;//sanity check
-        // once-off initialize
-        //djInit(N);
-    }
+// Performance hotspot
+// Since this is called hundreds of thousands of times per second and meant to be 'as fast as possible' we don't want extra unnecessray layers so either force inline, make it a #define or take other steps to remove unnecessary layer.
+// Also normally we want safety checks like if (pos==nullptr) in non-hotspots but since this is a performance hotspot let's just try make sure once pos is not null before starting the loop
+// and/or add a check in say, debug mode only to help catch potential bugs where this may be called wrongly on uninitialized data, while not sacrificing any performance in the final runtime on real simulation.
+// Using a #define maybe seems slightly gross but it's a clean idea here to ensure best performance here, while helping parameter passing be convenient ... as compilers don't always respect inline ...
+#define djDoUpdate(d_data, dt_deltatime, N) djCUDA_GPU_Update(N, pos, force, epsilon, sigma, k_electric, cutoff2, dt_deltatime, vel, inv_mass)
 
 
-    djCUDA_GPU_Update(N,
-        pos,   // (x,y,z,q)
-        force, // (fx,fy,fz,_)
-        epsilon,
-        sigma,
-        k_electric,
-        cutoff2,
-        dt,
-        vel,
-        inv_mass
-    );
-
-    //cudaMemCpy(h_pos, pos, N*sizeof(float4), cudaMemcpyDeviceToHost);
-}
 
 
 // Stats like number of frames drawn, total time, updates called etc.
@@ -512,6 +496,13 @@ int main(int argc, char** argv) {
         -1;
 
     std::cout << "dj:START MAIN LOOP" << std::endl;
+    // Sanity check! Make sure data initialized before starting sim
+    if (pos==nullptr)
+    {
+        // This is one of those "shouldn't happen" types of things
+        std::cerr << "dj:ERROR:GPU simulation data not initialized" << std::endl;
+        return -1;
+    }
     auto startTime = std::chrono::high_resolution_clock::now();
     if (!haveGL || headless)
     {
