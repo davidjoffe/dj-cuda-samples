@@ -19,7 +19,7 @@ void compute_forces_lj_coulomb(
 
     float4 pi4 = pos[i];
     float3 pi  = make_float3(pi4.x, pi4.y, pi4.z);
-    float  qi  = pi4.w;
+    //float  qi  = pi4.w;
 
     float3 fi  = make_float3(0.0f, 0.0f, 0.0f);
 
@@ -30,7 +30,7 @@ void compute_forces_lj_coulomb(
 
         float4 pj4 = pos[j];
         float3 pj  = make_float3(pj4.x, pj4.y, pj4.z);
-        float  qj  = pj4.w;
+        //float  qj  = pj4.w;
 
         float3 rij;
         rij.x = pj.x - pi.x;

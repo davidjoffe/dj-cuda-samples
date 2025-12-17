@@ -15,4 +15,6 @@ struct __device_builtin__ __builtin_align__(16) float4
 
 void djVisualsInit();
 void djVisualsInitOnceoff(const int N);
-void djVisualsDraw(float4* h_pos, float *h_x, float* h_y, float* h_z, float* radius, const int N);
+void djVisualsDraw(float4* h_pos, float *h_x, float* h_y, float* h_z, float* radius, const int N,
+    float zoom);
+ 

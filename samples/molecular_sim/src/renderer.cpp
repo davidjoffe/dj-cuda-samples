@@ -127,7 +127,7 @@ void djVisualsInitOnceoff(const int N)
     }
 }
 
-void djVisualsDraw(float4* h_pos, float *h_x, float* h_y, float* h_z, float* radius, const int N)
+void djVisualsDraw(float4* h_pos, float *h_x, float* h_y, float* h_z, float* radius, const int N, float zoom)
 {
     djVisualsInitOnceoff(N);
 
@@ -159,8 +159,8 @@ glPointSize(0.8f);
     for ( int i = 0; i < N; ++i ) {
 //        g_GL.vertexarray[i*2 + 0] = h_x[i] + drawoffsetX;
     //      g_GL.vertexarray[i*2 + 1] = h_y[i] + drawoffsetY;
-        g_GL.vertexarray[i*2 + 0] = h_pos[i].x * 0.01f + drawoffsetX;
-        g_GL.vertexarray[i*2 + 1] = h_pos[i].y * 0.01f + drawoffsetY;
+        g_GL.vertexarray[i*2 + 0] = h_pos[i].x * (0.01f*zoom) + drawoffsetX;
+        g_GL.vertexarray[i*2 + 1] = h_pos[i].y * (0.01f*zoom) + drawoffsetY;
         //g_GL.vert
     }
     glBindBuffer(GL_ARRAY_BUFFER, g_GL.vbo);

@@ -32,6 +32,7 @@ In such case, we maybe don't want to sleep, and though we may still want to use 
 #include "camera.h"
 #include "stats.h"
 #include "md_simulation.h"
+#include "view.h"
 
 #include <iostream>
 #include <cuda_runtime.h>
@@ -193,10 +194,11 @@ struct SoA_Data
     int    count=0;
 
     // host/CPU functions
-    void init(int n);
+    //void init(int n);
     // Note we don't want a destructor here that would automatically cleanup() as that would mean temporaries like 'SoA_Data h_b' would cause cudaFree calls when going out of scope (of the live actual d_balls in GPU memory alloc'd with cudaAlloc etc.)
-    void cleanup();
+    //void cleanup();
 };
+/*
 void SoA_Data::init(int n)
 {
     std::cout << "dj:Initializing " << n << " demo data in GPU VRAM." << std::endl;
@@ -267,7 +269,6 @@ void SoA_Data::init(int n)
 
     std::cout << "dj:Initialization complete." << std::endl;
 }
-
 void SoA_Data::cleanup()
 {
     std::cout << "dj:Cleaning up particle data from GPU VRAM." << std::endl;
@@ -289,6 +290,8 @@ void SoA_Data::cleanup()
     radius = nullptr;
     count = 0;
 }
+*/
+
 
 
 int main(int argc, char** argv) {
@@ -308,6 +311,7 @@ int main(int argc, char** argv) {
     std::cout << "Version " << DJAPP_VERSION_molecular_sim << std::endl;
     std::cout << "Keys:" << std::endl;
     std::cout << "    P     Pause/Unpause" << std::endl;
+    std::cout << "    Z/X   Zoom in / Zoom out" << std::endl;
     std::cout << "    ESC   Exit" << std::endl;
     std::cout << "-------------------------------------------" << std::endl;
     std::cout << "Command line options:" << std::endl;
@@ -472,7 +476,7 @@ int main(int argc, char** argv) {
         // Clear
         glClearColor(0.1f, 0.1f, 0.45f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N);
+        djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N, g_view.zoom);
         glfwSwapBuffers(window);
         // Wait a few seconds
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -488,7 +492,7 @@ int main(int argc, char** argv) {
         // Clear
         glClearColor(0.1f, 0.1f, 0.4f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N);
+        djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N, g_view.zoom);
         glfwSwapBuffers(window);
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         // Clear
@@ -593,9 +597,18 @@ int main(int argc, char** argv) {
         // Close on ESC
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
+        // User zoom settings .. here it's less critical to detect 'keypress state edges'
+        int keystate = glfwGetKey(window, GLFW_KEY_Z);
+        if (keystate == GLFW_PRESS)
+            g_view.zoom *= 1.1f;
+        keystate = glfwGetKey(window, GLFW_KEY_X);
+        if (keystate == GLFW_PRESS)
+            g_view.zoom /= 1.1f;
+
+
         // P for pause
         // Detect 'edge' of keypress (but react on down for fastest response, but we don't want to repeat pause/unpause rapidly while key is held down)
-        int keystate = glfwGetKey(window, GLFW_KEY_P);
+        keystate = glfwGetKey(window, GLFW_KEY_P);
         static int keystate_last = GLFW_RELEASE;
         if (keystate == GLFW_PRESS && keystate_last != GLFW_PRESS) {
             paused = !paused;
@@ -634,17 +647,17 @@ int main(int argc, char** argv) {
             auto nowstart = now;
             float dtnow = 0.0f;//<-time spent updating this frame
 //            while (dtnow < TARGET_FRAMERATE_seconds)
+            //for (int multi=0;multi<10;++multi)
             {
                 // maybe not obvious but we don't pass real human dt to update here, we pass the 'sim rate' of say 500hz of whatever:
                 djDoUpdate(d_data, stablerate, N);
                 ++g_stats.updateCountAccum;
                 ++g_stats.updateCount; // STATS
                 g_stats.virtualTimeTotal += stablerate;
-
-                std::cout<<".";
-                auto now1 = std::chrono::high_resolution_clock::now();
-                dtnow = std::chrono::duration<float>(now1 - nowstart).count();
             }
+            std::cout<<".";
+            auto now1 = std::chrono::high_resolution_clock::now();
+            dtnow = std::chrono::duration<float>(now1 - nowstart).count();
             std::cout << dtnow << " " << stablerate << " " << g_stats.virtualTimeTotal << " " << g_stats.GPUupdates << std::endl;
 
 
@@ -695,7 +708,7 @@ int main(int argc, char** argv) {
         // Temporarily keep old drawing code commented out for now for testing ... to make sure new one is correct
         //djVisualsDrawOld(h_x, h_y, nullptr, nullptr, N);
         // todo most of these params are not used come from other sample
-        djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N);
+        djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N, g_view.zoom);
 
 
         glfwSwapBuffers(window);

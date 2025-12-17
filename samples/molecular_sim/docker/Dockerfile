@@ -26,7 +26,9 @@ WORKDIR /app
 COPY CMakeLists.txt ./
 COPY external/ ./external/
 COPY src/ ./src/
-COPY samples/molecular_sim/ ./samples/molecular_sim/
+#COPY samples/molecular_sim/ ./samples/molecular_sim/
+# for now copy all though we should probably just build molecular_sim someday ..
+COPY samples/ ./samples/
 
 # Build
 RUN cmake -S . -B build-docker -DCMAKE_BUILD_TYPE=Release && \
