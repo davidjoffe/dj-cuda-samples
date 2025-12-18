@@ -13,6 +13,12 @@
 ./build-linux/samples/molecular_sim/djmolecular_sim  -N 50000 --headless --maxframes 1000
 ./build-linux/samples/molecular_sim/djmolecular_sim  -N 100000 --headless --maxframes 1000
 
+./build-linux/samples/molecular_sim/djmolecular_sim  -N 1024 --maxframes 1000
+./build-linux/samples/molecular_sim/djmolecular_sim  -N 10000 --maxframes 1000
+./build-linux/samples/molecular_sim/djmolecular_sim  -N 20000 --maxframes 1000
+./build-linux/samples/molecular_sim/djmolecular_sim  -N 50000 --maxframes 1000
+./build-linux/samples/molecular_sim/djmolecular_sim  -N 100000 --maxframes 1000
+
 ./build-linux/samples/bouncing_balls/djbouncing_balls  -N 1000000 --headless --maxframes 500
 ./build-linux/samples/bouncing_balls/djbouncing_balls  -N 1000000 --headless --maxframes 1000
 ./build-linux/samples/bouncing_balls/djbouncing_balls  -N 1500000 --headless --maxframes 500
