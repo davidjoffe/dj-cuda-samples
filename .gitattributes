@@ -1,0 +1,6 @@
+# Shell scripts must be LF for Unix
+*.sh text eol=lf
+# Windows bat cmd powershell etc. CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
