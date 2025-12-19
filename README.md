@@ -11,8 +11,8 @@ A growing collection of small CUDA cross-platform learning samples by David Joff
 ## Samples:
 
 * Simple bouncing ball sample/demo
-* Molecular Sim (in development)
-* Galaxy Explorer (in development)
+* [`Molecular Sim`](samples/molecular_sim) (beta, in development)
+* [`Galaxy Explorer`](samples/galaxy_explorer) Galaxy Explorer (in development)
 * Templates
 
 Platforms: Windows; Linux/WSL; (macOS in development)
