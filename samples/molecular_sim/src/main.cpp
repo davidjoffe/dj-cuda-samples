@@ -510,6 +510,9 @@ int main(int argc, char** argv) {
         if (maxframes <= 0) {
             // It's debatable whether to allow user to do this or not ...
             std::cout << "WARNING No maxframes specified in headless mode, may run forever!" << std::endl;
+            // todo .. should we allow this or force a maxframes?
+            //std::cout << "Setting default maxframes to 500" << std::endl;
+            //maxframes = 500;
             //return -1;  
         }
         bool running = true;
@@ -591,10 +594,10 @@ int main(int argc, char** argv) {
         // User zoom settings .. here it's less critical to detect 'keypress state edges'
         int keystate = glfwGetKey(window, GLFW_KEY_Z);
         if (keystate == GLFW_PRESS)
-            g_view.zoom *= 1.1f;
+            g_view.zoom *= 1.05f;
         keystate = glfwGetKey(window, GLFW_KEY_X);
         if (keystate == GLFW_PRESS)
-            g_view.zoom /= 1.1f;
+            g_view.zoom /= 1.05f;
 
 
         // P for pause
