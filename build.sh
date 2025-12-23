@@ -54,7 +54,7 @@ else
 fi
 
 #source ./scripts/runall.sh
-./scripts/runall.sh
+./scripts/runall.sh $@
 #eval ./scripts/runall.sh
 
 

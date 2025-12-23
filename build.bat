@@ -1,4 +1,6 @@
-@rem dj CUDA samples
+@rem dj-cuda-samples — https://github.com/davidjoffe/dj-cuda-samples
+@rem (c) David Joffe / DJ Software - Business Source License (BSL 1.1). See LICENSE
+
 @rem Build script for Windows using vcpkg and cmake
 @rem Adjust the VCPKG variable to point to your vcpkg installation
 @rem Usage: build.bat (optional-args-to-pass-to-built-app)
@@ -21,6 +23,7 @@
 rem *** NB: SET YOUR VCPKG PATH HERE FOR CMAKE TO FIND CONFIG FILES FOR LIBS LIKE GLFW ***
 rem If you get errors about "FindGLFW3.cmake" and CMAKE_MODULE_PATH try set your vcpkg path below
 set VCPKG=C:\v
+@echo dj-build: VCPKG vcpkg folder setting: %VCPKG%
 
 rem clean
 rd /s /q build-windows
@@ -40,6 +43,8 @@ cmake --build build-windows --config Release -j
 
 @rem run the built application
 @rem Just pass in passed-in command line args to this script, that allows us to call build with different args to pass to the auto run here:
-@echo dj:build: Run djbouncing_balls_demo.exe %*
-".\build-windows\samples\bouncing_balls\Release\djbouncing_balls_demo.exe" %*
+@echo dj:build: Run djbouncing_balls.exe %*
+".\build-windows\samples\bouncing_balls\Release\djbouncing_balls.exe" %*
 ".\build-windows\samples\template_minimal\Release\djtemplate_minimal.exe" %*
+
+call .\scripts\wrunall.bat %*
