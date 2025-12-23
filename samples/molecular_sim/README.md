@@ -118,4 +118,6 @@ Conceptual design layers: 'molecular-specific' -> 'visuals' -> more generic 'ren
 ## Author
 
 David Joffe  
-https://djoffe.com
+* https://djoffe.com
+* [LinkedIn page](https://www.linkedin.com/in/david-joffe-50771b4/)
+* [github.io page](https://davidjoffe.github.io/)

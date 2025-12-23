@@ -4,14 +4,14 @@
 
 A growing collection of small CUDA cross-platform learning samples by David Joffe, starting with a simple GPU-accelerated bouncing-balls demo using CUDA + OpenGL via GLFW.
 
-[CUDA Sample(s)/demo by David Joffe](https://github.com/davidjoffe/dj-cuda-samples)
+[CUDA samples/demos](https://github.com/davidjoffe/dj-cuda-samples) by [David Joffe](https://davidjoffe.github.io/)
 
 * [LinkedIn](https://www.linkedin.com/in/david-joffe-50771b4/)
 
 ## Samples:
 
-* Simple bouncing ball sample/demo
-* [`Molecular Sim`](samples/molecular_sim) (beta, in development)
+* Simple bouncing ball sample/demo (millions of particles)
+* [`Molecular Sim`](samples/molecular_sim) (beta)
 * [`Galaxy Explorer`](samples/galaxy_explorer) Galaxy Explorer (in development)
 * Templates
 
