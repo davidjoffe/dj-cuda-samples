@@ -47,19 +47,13 @@ cmake --build $BUILD_DIR --config Release -- -j$(nproc)
 echo dj-build-linux: Run app $@
 
 # If building on a non-CUDA-supported platform then it may be normal for this to be not found, else it should be there:
-if [ ! -f ./$BUILD_DIR/samples/bouncing_balls/djbouncing_balls ]; then
-    echo "djbouncing_balls demo not found"
-else
-    ./$BUILD_DIR/samples/bouncing_balls/djbouncing_balls $@
-fi
+#if [ ! -f ./$BUILD_DIR/samples/bouncing_balls/djbouncing_balls ]; then
+#    echo "djbouncing_balls demo not found"
+#else
+#    ./$BUILD_DIR/samples/bouncing_balls/djbouncing_balls $@
+#fi
 
 #source ./scripts/runall.sh
+# Auto run all built samples to test after build
 ./scripts/runall.sh $@
 #eval ./scripts/runall.sh
-
-
-#if [ ! -f ./build-linux/samples/template_minimal/djtemplate_minimal ]; then
-#    echo "djtemplate_minimal not found"
-#else
-#    ./build-linux/samples/template_minimal/djtemplate_minimal $@
-#fi
