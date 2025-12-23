@@ -460,7 +460,7 @@ int main(int argc, char** argv) {
         // Clear
         glClearColor(0.1f, 0.1f, 0.45f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N, g_view.zoom);
+        djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N, g_view.zoom, 0);
         glfwSwapBuffers(window);
         // Wait a few seconds
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -476,7 +476,7 @@ int main(int argc, char** argv) {
         // Clear
         glClearColor(0.1f, 0.1f, 0.4f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N, g_view.zoom);
+        djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N, g_view.zoom, 0);
         glfwSwapBuffers(window);
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         // Clear
@@ -617,6 +617,8 @@ int main(int argc, char** argv) {
         auto now = std::chrono::high_resolution_clock::now();
         float dt = std::chrono::duration<float>(now - lastFrameTime).count();
         lastFrameTime = now;
+        //if (debug)
+        //    std::cout << "{" << dt << " " << lastFrameTime << " " << now << "}" << std::endl;
 
         // Run GPU kernel parallel update function
         if (!paused)
@@ -702,7 +704,7 @@ int main(int argc, char** argv) {
         // Temporarily keep old drawing code commented out for now for testing ... to make sure new one is correct
         //djVisualsDrawOld(h_x, h_y, nullptr, nullptr, N);
         // todo most of these params are not used come from other sample
-        djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N, g_view.zoom);
+        djVisualsDraw(h_pos, h_x, h_y, nullptr, nullptr, N, g_view.zoom, dt);
 
 
         glfwSwapBuffers(window);

@@ -5,6 +5,7 @@
 
 #include <glad/glad.h>
 #include <string.h>//memset
+#include <math.h>//sinf
 
 // Small helper to compile a shader
 GLuint compile(GLenum type, const char* src) {
@@ -35,20 +36,29 @@ void djVisualsInit()
     // vertex shader (vs), fragment shader (fs)
     const char* vs = R"(
         #version 330 core
-        layout(location = 0) in vec2 aPos;
+        layout(location = 0) in vec3 aPos;
+        uniform mat4 uM;   // ← one matrix
         out vec4 vertexColor; // send color to the fragment shader
         void main() {
-            gl_Position = vec4(aPos, 0.0, 1.0);
+            //gl_Position = vec4(aPos, 1.0);
+            gl_Position = uM * vec4(aPos, 1.0);
             // Originally we just had white vertices, now we make the color position-dependent which looks nicer
             // later we could maybe add some settings if user wants to make it white again or something
             // Positions are currently between -1 to 1 so make sure normalized in that range
             float x = clamp(aPos.x, -1.0, 1.0);
             float y = clamp(aPos.y, -1.0, 1.0);
+            float z = clamp(aPos.z, -1.0, 1.0);
             //float z = 0.0; // could use aPos.z if we had it
+            //vertexColor = vec4(
+            //    0.1 + 0.9 * ((x + 1.0) / 2.0), // <- red
+            //    0.1 + 0.9 * ((y + 1.0) / 2.0), // <- green
+            //    0.1 + 0.9 * ((0 + 1.0) / 2.0), // <- blue
+            //    1.0 // alpha
+            //);
             vertexColor = vec4(
-                0.1 + 0.9 * ((x + 1.0) / 2.0), // <- red
-                0.1 + 0.9 * ((y + 1.0) / 2.0), // <- green
-                0.1 + 0.9 * ((0 + 1.0) / 2.0), // <- blue
+                0.3 + 0.7 * ((x + 1.0) / 2.0), // <- red
+                0.3 + 0.7 * ((y + 1.0) / 2.0), // <- green
+                0.4 + 0.6 * ((z + 1.0) / 2.0), // <- blue
                 1.0 // alpha
             );
         }
@@ -103,11 +113,14 @@ void djVisualsInitOnceoff(const int N)
         // Allocate host arrays to hold positions
         if (g_GL.vertexarray) delete[]g_GL.vertexarray;
 
+        const bool is3d = true;
+        const int NUM=(is3d ? 3 : 2);
+
         // Allocate twice the size for x and y
         // Our incoming data is in separate arrays for x and y (for GPU kernel optimization reasons eg warp threads memory access speed), but we want to interleave them for OpenGL
         // [x0,y0, x1,y1, x2,y2, ...] easier for OpenGL to consume
-        g_GL.vertexarray = new float[N * 2]; // x and y
-        memset(g_GL.vertexarray, 0, N * 2 * sizeof(float));
+        g_GL.vertexarray = new float[N * NUM]; // x and y
+        memset(g_GL.vertexarray, 0, N * NUM * sizeof(float));
 
         // Save size
         g_GL.N = N;
@@ -119,17 +132,36 @@ void djVisualsInitOnceoff(const int N)
         glBindBuffer(GL_ARRAY_BUFFER, g_GL.vbo);
 
         // allocate the max needed size ONCE
-        glBufferData(GL_ARRAY_BUFFER, N * 2 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, N * NUM * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
 
         // set vertex layout
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), (void*)0);
+        glVertexAttribPointer(0, NUM, GL_FLOAT, GL_FALSE, NUM*sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
     }
 }
 
-void djVisualsDraw(float4* h_pos, float *h_x, float* h_y, float* h_z, float* radius, const int N, float zoom)
+// dt = delta-time (time passed)
+void djVisualsDraw(float4* h_pos, float *h_x, float* h_y, float* h_z, float* radius, const int N, float zoom, float dt)
 {
     djVisualsInitOnceoff(N);
+
+    static float timeSeconds = 0.0f;
+    //timeSeconds += dt;//0.01f;//fake but a start
+    float angle = 0.1f;//timeSeconds * 0.1f;  // animate if you want
+    const float c = cosf(angle);
+    const float s = sinf(angle);
+    // Rotation matrix
+    const float M[16] = {
+        c, 0,  s, 0,
+        0, 1,  0, 0,
+        -s, 0,  c, 0,
+        0, 0,  0, 1
+    };
+
+    glUseProgram(g_GL.prog);
+    GLint loc = glGetUniformLocation(g_GL.prog, "uM");
+    glUniformMatrix4fv(loc, 1, GL_FALSE, M);
+
 
     // This scale is/was meant for things like, say, if may be necessary to scale to window width/height ...
     //const float scaleX = 1.f;//800.f;
@@ -156,16 +188,17 @@ glPointSize(0.8f);
 //fddsf
 
     // LOOP THROUGH MOLECULES' POSITIONS AND DRAW
+    const int NUM=3;
     for ( int i = 0; i < N; ++i ) {
 //        g_GL.vertexarray[i*2 + 0] = h_x[i] + drawoffsetX;
     //      g_GL.vertexarray[i*2 + 1] = h_y[i] + drawoffsetY;
-        g_GL.vertexarray[i*2 + 0] = h_pos[i].x * (0.01f*zoom) + drawoffsetX;
-        g_GL.vertexarray[i*2 + 1] = h_pos[i].y * (0.01f*zoom) + drawoffsetY;
+        g_GL.vertexarray[i*NUM + 0] = h_pos[i].x * (0.01f*zoom) + drawoffsetX;
+        g_GL.vertexarray[i*NUM + 1] = h_pos[i].y * (0.01f*zoom) + drawoffsetY;
+        g_GL.vertexarray[i*NUM + 2] = h_pos[i].z * 0.01f;
         //g_GL.vert
     }
     glBindBuffer(GL_ARRAY_BUFFER, g_GL.vbo);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, 2*N*sizeof(float), g_GL.vertexarray);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, NUM*N*sizeof(float), g_GL.vertexarray);
     glBindVertexArray(g_GL.vao);
     glDrawArrays(GL_POINTS, 0, N);// Draw all points at once
 }
-
