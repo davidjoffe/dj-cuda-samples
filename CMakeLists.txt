@@ -87,6 +87,22 @@ add_subdirectory(samples/template_minimal)
 add_subdirectory(samples/galaxy_explorer)
 #add_subdirectory(samples/template_gl)
 #add_subdirectory(samples/template_imgui)
+# If Apple enable by default Metal but may optionally disable
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(APPLE TRUE)
+endif()
+if(APPLE)
+    option(djBUILD_METAL_PROJECTS "Build Metal projects" ON)
+else()
+    option(djBUILD_METAL_PROJECTS "Build Metal projects" OFF)
+endif()
+
+if(djBUILD_METAL_PROJECTS)
+    message("dj-cmake: Building Metal projects")
+    add_subdirectory(samples/template_metal)
+else()
+    message("dj-cmake: Skipping Metal projects")
+endif()
 
 # ================================================================
 # CUDA samples (only if CUDA compiler exists)
